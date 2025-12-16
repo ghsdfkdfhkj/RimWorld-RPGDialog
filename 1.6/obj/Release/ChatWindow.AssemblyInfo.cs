@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RPGDialog")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+440e07053f839dc048447f278e15a72bb9e917bb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c9abe5615cf042f0566cc80d24bed733bbe6973f")]
 [assembly: System.Reflection.AssemblyProductAttribute("RPGDialog")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RPGDialog")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

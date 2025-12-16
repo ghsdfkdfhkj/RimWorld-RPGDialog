@@ -45,21 +45,22 @@ namespace RPGDialog
         }
         public static bool useVanillaWindow = false;
 
-        // Lightweight runtime state kept here
-        private static readonly Dictionary<DiaNode, int> nodePageCache = new Dictionary<DiaNode, int>();
-        private static readonly Dictionary<DiaNode, HashSet<int>> fullyTypedPagesCache = new Dictionary<DiaNode, HashSet<int>>();
-        // Number of lines per page is dynamic based on configured font size (24px -> 6 lines)
+        // Session state to support concurrent dialogs (e.g. multiplayer or mod conflicts)
+        private class DialogSession
+        {
+            public Dictionary<DiaNode, int> nodePageCache = new Dictionary<DiaNode, int>();
+            public Dictionary<DiaNode, HashSet<int>> fullyTypedPagesCache = new Dictionary<DiaNode, HashSet<int>>();
+            public int visibleCharsOnPage = 0;
+            public float lastCharTypedTime = 0f;
+            public float lastSoundTime = 0f;
+            public DiaNode currentNodeForTyping = null;
+            public HashSet<DiaNode> clickedChoiceNodes = new HashSet<DiaNode>();
+            public bool isSkipped = false;
+        }
 
-        private static int visibleCharsOnPage = 0;
-        private static float lastCharTypedTime = 0f;
-        private static float lastSoundTime = 0f;
-        private static DiaNode currentNodeForTyping = null;
-        private static readonly HashSet<DiaNode> s_clickedChoiceNodes = new HashSet<DiaNode>();
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Dialog_NodeTree, DialogSession> sessions = new System.Runtime.CompilerServices.ConditionalWeakTable<Dialog_NodeTree, DialogSession>();
 
         private static ChoiceMenuWindow s_activeChoiceMenu = null;
-
-        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Dialog_NodeTree, IsSkipped> s_isSkippedTracker = new System.Runtime.CompilerServices.ConditionalWeakTable<Dialog_NodeTree, IsSkipped>();
-        private class IsSkipped { public bool value; }
 
         public static void Notify_ChoiceMenuClosed()
         {
@@ -108,29 +109,29 @@ namespace RPGDialog
                 // Ensure global UI styles initialized
                 UIStyles.EnsureInitialized();
 
-                // When node changes, reset typing state and invalidate caches
-                if (node != currentNodeForTyping)
+                // Get or create session
+                if (!sessions.TryGetValue(__instance, out DialogSession session))
                 {
-                    currentNodeForTyping = node;
-                    visibleCharsOnPage = 0;
-                    lastCharTypedTime = Time.realtimeSinceStartup;
-                    nodePageCache.Remove(node);
-                    fullyTypedPagesCache.Remove(node);
+                    session = new DialogSession();
+                    sessions.Add(__instance, session);
+                }
+
+                // When node changes, reset typing state and invalidate caches
+                if (node != session.currentNodeForTyping)
+                {
+                    session.currentNodeForTyping = node;
+                    session.visibleCharsOnPage = 0;
+                    session.lastCharTypedTime = Time.realtimeSinceStartup;
+                    session.nodePageCache.Remove(node);
+                    session.fullyTypedPagesCache.Remove(node);
                     TypingLayoutCache.InvalidateNode(node);
-                    s_clickedChoiceNodes.Clear(); // Clear the clicked nodes history
-                    s_isSkippedTracker.Remove(__instance); // Reset skip state for new node
+                    session.clickedChoiceNodes.Clear(); // Clear the clicked nodes history
+                    session.isSkipped = false; // Reset skip state for new node
                 }
 
                 // Setup window rect using settings
                 __instance.windowRect.width = UI.screenWidth * RPGDialogMod.settings.windowWidthScale * scale;
                 __instance.windowRect.height = UI.screenHeight * RPGDialogMod.settings.windowHeightScale * scale;
-
-                // Get or create the skip state for this window instance
-                if (!s_isSkippedTracker.TryGetValue(__instance, out var isSkippedState))
-                {
-                    isSkippedState = new IsSkipped { value = false };
-                    s_isSkippedTracker.Add(__instance, isSkippedState);
-                }
 
                 // Button layout from right to left
                 float currentButtonX = inRect.width;
@@ -172,16 +173,13 @@ namespace RPGDialog
                 currentButtonX -= 10f; // Gap between buttons
 
                 // Skip button
-                float skipButtonWidth = SkipButtonHandler.DrawSkipButton(currentButtonX, 0f, ref isSkippedState.value);
+                float skipButtonWidth = SkipButtonHandler.DrawSkipButton(currentButtonX, 0f, ref session.isSkipped);
                 currentButtonX -= skipButtonWidth;
 
                 // Resolve text (TaggedString -> resolved rich text)
                 string rawDialogText = node.text.Resolve();
                 var speakerTraverse = Traverse.Create(__instance).Field("speaker");
                 Pawn speakerPawn = speakerTraverse.GetValue<Pawn>();
-
-
-
 
                 bool radioMode = Traverse.Create(__instance).Field<bool>("radioMode").Value;
 
@@ -271,31 +269,31 @@ namespace RPGDialog
                 var pageStartIndices = TypingLayoutCache.GetPageStarts(node);
 
                 // --- Button State Logic (Moved to after cache is built) ---
-                int currentPageForButton = nodePageCache.TryGetValue(node, out int page) ? page : 0;
+                int currentPageForButton = session.nodePageCache.TryGetValue(node, out int page) ? page : 0;
                 bool isLastPageForButton = currentPageForButton >= (pageStartIndices.Count - 1);
-                bool isTypingForButton = IsTyping(node, currentPageForButton);
+                bool isTypingForButton = IsTyping(session, node, currentPageForButton);
                 
                 if (isLastPageForButton && !isTypingForButton)
                 {
-                    isSkippedState.value = true;
+                    session.isSkipped = true;
                 }
 
                 int totalPages = pageStartIndices.Count;
-                if (!nodePageCache.ContainsKey(node)) nodePageCache[node] = 0;
-                int currentPage = Mathf.Clamp(nodePageCache[node], 0, totalPages > 0 ? totalPages - 1 : 0);
+                if (!session.nodePageCache.ContainsKey(node)) session.nodePageCache[node] = 0;
+                int currentPage = Mathf.Clamp(session.nodePageCache[node], 0, totalPages > 0 ? totalPages - 1 : 0);
 
                 if (SkipButtonHandler.IsSkipRequested() && totalPages > 0)
                 {
                     currentPage = totalPages - 1;
-                    nodePageCache[node] = currentPage;
+                    session.nodePageCache[node] = currentPage;
                     
-                    if (!fullyTypedPagesCache.ContainsKey(node)) fullyTypedPagesCache[node] = new HashSet<int>();
+                    if (!session.fullyTypedPagesCache.ContainsKey(node)) session.fullyTypedPagesCache[node] = new HashSet<int>();
                     for (int i = 0; i < totalPages; i++)
                     {
-                        fullyTypedPagesCache[node].Add(i);
+                        session.fullyTypedPagesCache[node].Add(i);
                     }
                     string lastPageRichText = TypingLayoutCache.GetPageRichTexts(node)[currentPage];
-                    visibleCharsOnPage = RichTypingRenderer.CountVisibleChars(lastPageRichText);
+                    session.visibleCharsOnPage = RichTypingRenderer.CountVisibleChars(lastPageRichText);
                 }
 
                 string pageTextRaw = TypingLayoutCache.GetPageTexts(node)[currentPage];
@@ -305,12 +303,12 @@ namespace RPGDialog
 
                 if (RPGDialogMod.settings.typingEffectEnabled)
                 {
-                    bool pageHasBeenTyped = fullyTypedPagesCache.TryGetValue(node, out var typedPages) && typedPages.Contains(currentPage);
+                    bool pageHasBeenTyped = session.fullyTypedPagesCache.TryGetValue(node, out var typedPages) && typedPages.Contains(currentPage);
 
                     if (!pageHasBeenTyped)
                     {
                         int totalVisibleOnPage = RichTypingRenderer.CountVisibleChars(pageTextRich);
-                        if (visibleCharsOnPage < totalVisibleOnPage)
+                        if (session.visibleCharsOnPage < totalVisibleOnPage)
                         {
                             isTyping = true;
                             if (Event.current.type == EventType.Repaint)
@@ -319,16 +317,16 @@ namespace RPGDialog
                                 if (speed <= 0) speed = 35f; // Safety check
                                 float delay = 1.0f / speed;
                                 
-                                float timeSinceLastChar = Time.realtimeSinceStartup - lastCharTypedTime;
+                                float timeSinceLastChar = Time.realtimeSinceStartup - session.lastCharTypedTime;
                                 if (timeSinceLastChar >= delay)
                                 {
                                     int charsToAdd = Mathf.FloorToInt(timeSinceLastChar / delay);
-                                    visibleCharsOnPage += charsToAdd;
-                                    lastCharTypedTime += charsToAdd * delay; 
+                                    session.visibleCharsOnPage += charsToAdd;
+                                    session.lastCharTypedTime += charsToAdd * delay; 
                                 }
                             }
 
-                            if (Event.current.type == EventType.Repaint && RPGDialogMod.settings.typingSoundEnabled && Time.realtimeSinceStartup - lastSoundTime > 0.08f)
+                            if (Event.current.type == EventType.Repaint && RPGDialogMod.settings.typingSoundEnabled && Time.realtimeSinceStartup - session.lastSoundTime > 0.08f)
                             {
                                 SoundDef typingSound = GetTypingSound(resolvedPawn);
                                 if (typingSound != null)
@@ -337,19 +335,19 @@ namespace RPGDialog
                                     info.volumeFactor = RPGDialogMod.settings.typingSoundVolume;
                                     typingSound.PlayOneShot(info);
                                 }
-                                lastSoundTime = Time.realtimeSinceStartup;
+                                session.lastSoundTime = Time.realtimeSinceStartup;
                             }
 
                             if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
                             {
-                                visibleCharsOnPage = totalVisibleOnPage;
+                                session.visibleCharsOnPage = totalVisibleOnPage;
                                 Event.current.Use();
                             }
                         }
                         else
                         {
-                            if (!fullyTypedPagesCache.ContainsKey(node)) fullyTypedPagesCache[node] = new HashSet<int>();
-                            fullyTypedPagesCache[node].Add(currentPage);
+                            if (!session.fullyTypedPagesCache.ContainsKey(node)) session.fullyTypedPagesCache[node] = new HashSet<int>();
+                            session.fullyTypedPagesCache[node].Add(currentPage);
                         }
                     }
                 }
@@ -359,16 +357,16 @@ namespace RPGDialog
                 if (AutoButtonHandler.ShouldTurnPage())
                 {
                     SoundStarter.PlayOneShotOnCamera(SoundDefOf.PageChange);
-                    if (!fullyTypedPagesCache.ContainsKey(node)) fullyTypedPagesCache[node] = new HashSet<int>();
-                    fullyTypedPagesCache[node].Add(currentPage); // Mark current page as seen
-                    nodePageCache[node]++; // Increment for next frame
-                    visibleCharsOnPage = 0; // Reset typing for next page
-                    lastCharTypedTime = Time.realtimeSinceStartup; // Reset typing timer
+                    if (!session.fullyTypedPagesCache.ContainsKey(node)) session.fullyTypedPagesCache[node] = new HashSet<int>();
+                    session.fullyTypedPagesCache[node].Add(currentPage); // Mark current page as seen
+                    session.nodePageCache[node]++; // Increment for next frame
+                    session.visibleCharsOnPage = 0; // Reset typing for next page
+                    session.lastCharTypedTime = Time.realtimeSinceStartup; // Reset typing timer
                 }
 
                 if (isTyping)
                 {
-                    int visibleCountForDraw = Mathf.Clamp(visibleCharsOnPage, 0, RichTypingRenderer.CountVisibleChars(pageTextRich));
+                    int visibleCountForDraw = Mathf.Clamp(session.visibleCharsOnPage, 0, RichTypingRenderer.CountVisibleChars(pageTextRich));
                     RichTypingRenderer.DrawRichTypedLabel(textDisplayRect, pageTextRich, visibleCountForDraw, UIStyles.BodyStyle);
                 }
                 else
@@ -410,7 +408,7 @@ namespace RPGDialog
                         {
                             AutoButtonHandler.Disable(); // Turn off auto mode when going back
                             SoundStarter.PlayOneShotOnCamera(SoundDefOf.PageChange);
-                            nodePageCache[node]--;
+                            session.nodePageCache[node]--;
                         }
 
                         Rect nextRect = new Rect(inRect.width - margin - nextButtonWidth, buttonY, nextButtonWidth, buttonHeight);
@@ -427,12 +425,12 @@ namespace RPGDialog
                             if (GUI.Button(nextRect, "Next".Translate(), UIStyles.ButtonStyle))
                             {
                                 SoundStarter.PlayOneShotOnCamera(SoundDefOf.PageChange);
-                                if (!fullyTypedPagesCache.ContainsKey(node)) fullyTypedPagesCache[node] = new HashSet<int>();
-                                fullyTypedPagesCache[node].Add(currentPage);
+                                if (!session.fullyTypedPagesCache.ContainsKey(node)) session.fullyTypedPagesCache[node] = new HashSet<int>();
+                                session.fullyTypedPagesCache[node].Add(currentPage);
 
-                                nodePageCache[node]++;
-                                visibleCharsOnPage = 0;
-                                lastCharTypedTime = Time.realtimeSinceStartup;
+                                session.nodePageCache[node]++;
+                                session.visibleCharsOnPage = 0;
+                                session.lastCharTypedTime = Time.realtimeSinceStartup;
                             }
                         }
 
@@ -545,7 +543,7 @@ namespace RPGDialog
                                         Rect buttonRect = new Rect(currentX - width, buttonY, width, buttonHeight);
                                         
                                         // Only draw the pulsing glow if this node's choices haven't been opened yet.
-                                        if (!allDisabled && !s_clickedChoiceNodes.Contains(node))
+                                        if (!allDisabled && !session.clickedChoiceNodes.Contains(node))
                                         {
                                             DrawPulsingGlow(buttonRect);
                                         }
@@ -564,7 +562,7 @@ namespace RPGDialog
                                             else
                                             {
                                                 SoundDefOf.Click.PlayOneShotOnCamera();
-                                                s_clickedChoiceNodes.Add(node); // Mark this node's choices as opened.
+                                                session.clickedChoiceNodes.Add(node); // Mark this node's choices as opened.
                                                 Action<DiaOption> onSelect = (DiaOption selectedOption) => {
                                                     var t = Traverse.Create(selectedOption);
                                                     t.Method("Activate").GetValue();
@@ -630,18 +628,18 @@ namespace RPGDialog
             public Action Activate;
         }
 
-        private static bool IsTyping(DiaNode node, int currentPage)
+        private static bool IsTyping(DialogSession session, DiaNode node, int currentPage)
         {
             if (!RPGDialogMod.settings.typingEffectEnabled) return false;
 
-            bool pageHasBeenTyped = fullyTypedPagesCache.TryGetValue(node, out var typedPages) && typedPages.Contains(currentPage);
+            bool pageHasBeenTyped = session.fullyTypedPagesCache.TryGetValue(node, out var typedPages) && typedPages.Contains(currentPage);
             if (pageHasBeenTyped) return false;
 
             // This is now safe because this method is only called after EnsurePagesBuilt has run.
             string pageTextRich = TypingLayoutCache.GetPageRichTexts(node)[currentPage];
             int totalVisibleOnPage = RichTypingRenderer.CountVisibleChars(pageTextRich);
 
-            return visibleCharsOnPage < totalVisibleOnPage;
+            return session.visibleCharsOnPage < totalVisibleOnPage;
         }
 
         private static OptionInfo GetOptionInfo(DiaOption option)
@@ -702,6 +700,8 @@ namespace RPGDialog
         [HarmonyPostfix]
         public static void Postfix(Letter let)
         {
+            if (let.arrivalTick > Find.TickManager.TicksGame) return;
+
             if (RPGDialogMod.settings.openWindowOnEvent && let is ChoiceLetter choiceLetter && let.CanShowInLetterStack)
             {
                 choiceLetter.OpenLetter();
