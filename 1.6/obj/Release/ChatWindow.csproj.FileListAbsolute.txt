@@ -1,0 +1,7 @@
+d:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\RPGDialog\1.6\Assemblies\RPGDialog.dll
+d:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\RPGDialog\1.6\obj\Release\ChatWindow.csproj.AssemblyReference.cache
+d:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\RPGDialog\1.6\obj\Release\ChatWindow.GeneratedMSBuildEditorConfig.editorconfig
+d:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\RPGDialog\1.6\obj\Release\ChatWindow.AssemblyInfoInputs.cache
+d:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\RPGDialog\1.6\obj\Release\ChatWindow.AssemblyInfo.cs
+d:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\RPGDialog\1.6\obj\Release\ChatWindow.csproj.CoreCompileInputs.cache
+d:\Program Files (x86)\Steam\steamapps\common\RimWorld\Mods\RPGDialog\1.6\obj\Release\RPGDialog.dll
