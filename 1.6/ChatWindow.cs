@@ -356,12 +356,34 @@ namespace RPGDialog
                 AutoButtonHandler.Update(isTyping, isLastPage);
                 if (AutoButtonHandler.ShouldTurnPage())
                 {
-                    SoundStarter.PlayOneShotOnCamera(SoundDefOf.PageChange);
-                    if (!session.fullyTypedPagesCache.ContainsKey(node)) session.fullyTypedPagesCache[node] = new HashSet<int>();
-                    session.fullyTypedPagesCache[node].Add(currentPage); // Mark current page as seen
-                    session.nodePageCache[node]++; // Increment for next frame
-                    session.visibleCharsOnPage = 0; // Reset typing for next page
-                    session.lastCharTypedTime = Time.realtimeSinceStartup; // Reset typing timer
+                    if (!isLastPage)
+                    {
+                        SoundStarter.PlayOneShotOnCamera(SoundDefOf.PageChange);
+                        if (!session.fullyTypedPagesCache.ContainsKey(node)) session.fullyTypedPagesCache[node] = new HashSet<int>();
+                        session.fullyTypedPagesCache[node].Add(currentPage); // Mark current page as seen
+                        session.nodePageCache[node]++; // Increment for next frame
+                        session.visibleCharsOnPage = 0; // Reset typing for next page
+                        session.lastCharTypedTime = Time.realtimeSinceStartup; // Reset typing timer
+                    }
+                    else
+                    {
+                        // Auto-Advance logic at the last page
+                        if (node.options.NullOrEmpty())
+                        {
+                            __instance.Close();
+                        }
+                        else if (node.options.Count == 1)
+                        {
+                            var opt = node.options[0];
+                            // Verify it's not disabled/invalid
+                            var t = Traverse.Create(opt);
+                            if (!t.Field<bool>("disabled").Value)
+                            {
+                                t.Method("Activate").GetValue();
+                            }
+                        }
+                        // If multiple choices exist, do NOT auto-choose. Wait for user input.
+                    }
                 }
 
                 if (isTyping)

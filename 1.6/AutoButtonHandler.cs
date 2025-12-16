@@ -115,15 +115,15 @@ namespace RPGDialog
 
         public static void Update(bool isTyping, bool isLastPage)
         {
-            if (!autoEnabled || isTyping || isLastPage)
+            if (!autoEnabled || isTyping)
             {
-                autoPageTurnTime = -1f; // Reset timer if typing, on last page, or disabled
+                autoPageTurnTime = -1f; // Reset timer if typing or disabled
                 return;
             }
 
             if (autoPageTurnTime < 0)
             {
-                autoPageTurnTime = Time.realtimeSinceStartup + 1.0f; // Set timer for 1.0 seconds delay
+                autoPageTurnTime = Time.realtimeSinceStartup + 2.0f; // Set timer for 2.0 seconds delay
             }
         }
 
