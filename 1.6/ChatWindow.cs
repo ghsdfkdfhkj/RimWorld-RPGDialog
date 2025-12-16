@@ -72,6 +72,14 @@ namespace RPGDialog
         {
             // Mark this instance so derived vanilla classes know we're using mod drawing
             ModDialogTracker.Mark(__instance);
+
+            // FAILSAFE: If enabled, only show RPG Dialog when actually playing the game (Map/World).
+            // This prevents the dialog from capturing UI in Main Menu, Pawn Creation, etc.
+            if (RPGDialogMod.settings.onlyShowInGame && Current.ProgramState != ProgramState.Playing)
+            {
+                return true;
+            }
+
             if (useVanillaWindow)
             {
                 __instance.preventCameraMotion = true;

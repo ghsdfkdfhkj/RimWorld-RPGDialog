@@ -51,4 +51,6 @@
     <RPDia_CustomTypingSoundSettings>Custom Typing Sound Settings</RPDia_CustomTypingSoundSettings>
     <RPDia_NoFaction>No Faction</RPDia_NoFaction>
     <RPDia_PreviewSound>Preview Sound</RPDia_PreviewSound>
+    <RPDia_OnlyShowInGame>Only show in active game</RPDia_OnlyShowInGame>
+    <RPDia_OnlyShowInGameTooltip>If enabled, RPG Dialogs will only appear when a game is loaded, preventing issues in menus or character creation.</RPDia_OnlyShowInGameTooltip>
 </LanguageData>

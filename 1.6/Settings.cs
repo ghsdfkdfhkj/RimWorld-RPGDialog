@@ -16,6 +16,7 @@ namespace RPGDialog
         public WindowPosition position = WindowPosition.Top;
         public WindowPosition echoPosition = WindowPosition.Top;
         public bool dontPauseOnOpen = true;
+        public bool onlyShowInGame = true;
         public bool openWindowOnEvent = true;
         public bool useFactionLeaderForOtherFactions = false;
         public bool typingEffectEnabled = true;
@@ -38,6 +39,7 @@ namespace RPGDialog
             Scribe_Values.Look(ref position, "position", WindowPosition.Top);
             Scribe_Values.Look(ref echoPosition, "echoPosition", WindowPosition.Top);
             Scribe_Values.Look(ref dontPauseOnOpen, "dontPauseOnOpen", true);
+            Scribe_Values.Look(ref onlyShowInGame, "onlyShowInGame", true);
             Scribe_Values.Look(ref openWindowOnEvent, "openWindowOnEvent", true);
             Scribe_Values.Look(ref useFactionLeaderForOtherFactions, "useFactionLeaderForOtherFactions", false);
             Scribe_Values.Look(ref typingEffectEnabled, "typingEffectEnabled", true);
@@ -69,6 +71,7 @@ namespace RPGDialog
             position = WindowPosition.Top;
             echoPosition = WindowPosition.Top;
             dontPauseOnOpen = true;
+            onlyShowInGame = true;
             openWindowOnEvent = true;
             useFactionLeaderForOtherFactions = false;
             typingEffectEnabled = true;
@@ -225,6 +228,7 @@ namespace RPGDialog
             leftListing.Begin(leftViewRect);
 
             leftListing.CheckboxLabeled("RPDia_DontPause".Translate(), ref settings.dontPauseOnOpen, "RPDia_DontPauseTooltip".Translate());
+            leftListing.CheckboxLabeled("RPDia_OnlyShowInGame".Translate(), ref settings.onlyShowInGame, "RPDia_OnlyShowInGameTooltip".Translate());
             leftListing.CheckboxLabeled("RPDia_OpenWindowOnEvent".Translate(), ref settings.openWindowOnEvent, "RPDia_OpenWindowOnEventTooltip".Translate());
             leftListing.GapLine();
 

@@ -51,4 +51,6 @@
     <RPDia_CustomTypingSoundSettings>커스텀 타이핑 사운드 설정</RPDia_CustomTypingSoundSettings>
     <RPDia_NoFaction>소속 없음</RPDia_NoFaction>
     <RPDia_PreviewSound>미리 듣기</RPDia_PreviewSound>
+    <RPDia_OnlyShowInGame>게임 진행 중에만 대화창 표시</RPDia_OnlyShowInGame>
+    <RPDia_OnlyShowInGameTooltip>활성화하면 게임이 로드된 상태(맵/월드)에서만 RPG 대화창이 나타납니다. 메인 메뉴나 캐릭터 생성 화면 등에서 대화창이 뜨는 문제를 방지합니다.</RPDia_OnlyShowInGameTooltip>
 </LanguageData>
