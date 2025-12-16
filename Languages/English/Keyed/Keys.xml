@@ -59,4 +59,8 @@
     <RPDia_TabAppearance>Appearance</RPDia_TabAppearance>
     <RPDia_TabTyping>Typing</RPDia_TabTyping>
     <RPDia_TabAudioProfiles>Audio Profiles</RPDia_TabAudioProfiles>
+
+    <RPDia_AutoModeSettings>Auto Mode Settings</RPDia_AutoModeSettings>
+    <RPDia_AutoMode_CloseAtEnd>Auto Close on Finish</RPDia_AutoMode_CloseAtEnd>
+    <RPDia_AutoMode_CloseAtEndTooltip>If checked, Auto Mode will automatically close the window when the dialog ends (no choices left).</RPDia_AutoMode_CloseAtEndTooltip>
 </LanguageData>

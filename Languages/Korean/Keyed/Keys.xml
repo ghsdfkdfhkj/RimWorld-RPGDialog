@@ -59,4 +59,8 @@
     <RPDia_TabAppearance>외형</RPDia_TabAppearance>
     <RPDia_TabTyping>타이핑</RPDia_TabTyping>
     <RPDia_TabAudioProfiles>오디오 프로필</RPDia_TabAudioProfiles>
+
+    <RPDia_AutoModeSettings>자동 모드 설정</RPDia_AutoModeSettings>
+    <RPDia_AutoMode_CloseAtEnd>대화 종료 시 자동 닫기</RPDia_AutoMode_CloseAtEnd>
+    <RPDia_AutoMode_CloseAtEndTooltip>체크 시, 선택지가 없고 대화가 끝났을 때 자동으로 창을 닫습니다.</RPDia_AutoMode_CloseAtEndTooltip>
 </LanguageData>

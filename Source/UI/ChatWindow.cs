@@ -370,17 +370,16 @@ namespace RPGDialog
                         // Auto-Advance logic at the last page
                         if (node.options.NullOrEmpty())
                         {
-                            __instance.Close();
+                            if (RPGDialogMod.settings.autoMode_CloseAtEnd)
+                            {
+                                __instance. Close();
+                            }
+                            // Otherwise wait for manual close
                         }
                         else if (node.options.Count == 1)
                         {
-                            var opt = node.options[0];
-                            // Verify it's not disabled/invalid
-                            var t = Traverse.Create(opt);
-                            if (!t.Field<bool>("disabled").Value)
-                            {
-                                t.Method("Activate").GetValue();
-                            }
+                            // Do nothing automatically for single choice, as requested.
+                            // User must click manually.
                         }
                         // If multiple choices exist, do NOT auto-choose. Wait for user input.
                     }

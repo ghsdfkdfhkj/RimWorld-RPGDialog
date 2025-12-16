@@ -33,6 +33,9 @@ namespace RPGDialog
         public bool showTraderPortrait = true;
         public bool showNegotiatorPortrait = true;
         public Dictionary<string, string> customStorytellerTypingSounds = new Dictionary<string, string>();
+        
+        // Auto Mode Settings
+        public bool autoMode_CloseAtEnd = true;
 
         public override void ExposeData()
         {
@@ -56,6 +59,8 @@ namespace RPGDialog
             Scribe_Values.Look(ref showTraderPortrait, "showTraderPortrait", true);
             Scribe_Values.Look(ref showNegotiatorPortrait, "showNegotiatorPortrait", true);
             Scribe_Collections.Look(ref customStorytellerTypingSounds, "customStorytellerTypingSounds", LookMode.Value, LookMode.Value);
+            
+            Scribe_Values.Look(ref autoMode_CloseAtEnd, "autoMode_CloseAtEnd", true);
             
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
@@ -272,6 +277,11 @@ namespace RPGDialog
             listing.CheckboxLabeled("RPDia_DontPause".Translate(), ref settings.dontPauseOnOpen, "RPDia_DontPauseTooltip".Translate());
             listing.CheckboxLabeled("RPDia_OnlyShowInGame".Translate(), ref settings.onlyShowInGame, "RPDia_OnlyShowInGameTooltip".Translate());
             listing.CheckboxLabeled("RPDia_OpenWindowOnEvent".Translate(), ref settings.openWindowOnEvent, "RPDia_OpenWindowOnEventTooltip".Translate());
+            listing.GapLine();
+
+            // Auto Mode Settings
+            listing.Label("RPDia_AutoModeSettings".Translate());
+            listing.CheckboxLabeled("RPDia_AutoMode_CloseAtEnd".Translate(), ref settings.autoMode_CloseAtEnd, "RPDia_AutoMode_CloseAtEndTooltip".Translate());
             listing.GapLine();
 
             listing.CheckboxLabeled("RPDia_UseOtherFactionNarrator".Translate(), ref settings.useFactionLeaderForOtherFactions, "RPDia_UseOtherFactionNarratorTooltip".Translate());
