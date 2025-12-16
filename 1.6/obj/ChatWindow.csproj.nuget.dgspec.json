@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "d:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\RPGDialog\\1.6\\ChatWindow.csproj": {}
+    "D:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\RPGDialog\\1.6\\ChatWindow.csproj": {}
   },
   "projects": {
-    "d:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\RPGDialog\\1.6\\ChatWindow.csproj": {
+    "D:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\RPGDialog\\1.6\\ChatWindow.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\RPGDialog\\1.6\\ChatWindow.csproj",
+        "projectUniqueName": "D:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\RPGDialog\\1.6\\ChatWindow.csproj",
         "projectName": "RPGDialog",
-        "projectPath": "d:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\RPGDialog\\1.6\\ChatWindow.csproj",
+        "projectPath": "D:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\RPGDialog\\1.6\\ChatWindow.csproj",
         "packagesPath": "C:\\Users\\woals\\.nuget\\packages\\",
-        "outputPath": "d:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\RPGDialog\\1.6\\obj\\",
+        "outputPath": "D:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\RPGDialog\\1.6\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
