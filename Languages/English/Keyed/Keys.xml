@@ -53,4 +53,10 @@
     <RPDia_PreviewSound>Preview Sound</RPDia_PreviewSound>
     <RPDia_OnlyShowInGame>Only show in active game</RPDia_OnlyShowInGame>
     <RPDia_OnlyShowInGameTooltip>If enabled, RPG Dialogs will only appear when a game is loaded, preventing issues in menus or character creation.</RPDia_OnlyShowInGameTooltip>
+
+    <!-- Settings Tabs -->
+    <RPDia_TabGeneral>General</RPDia_TabGeneral>
+    <RPDia_TabAppearance>Appearance</RPDia_TabAppearance>
+    <RPDia_TabTyping>Typing</RPDia_TabTyping>
+    <RPDia_TabAudioProfiles>Audio Profiles</RPDia_TabAudioProfiles>
 </LanguageData>

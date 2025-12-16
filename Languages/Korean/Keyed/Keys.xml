@@ -53,4 +53,10 @@
     <RPDia_PreviewSound>미리 듣기</RPDia_PreviewSound>
     <RPDia_OnlyShowInGame>게임 진행 중에만 대화창 표시</RPDia_OnlyShowInGame>
     <RPDia_OnlyShowInGameTooltip>활성화하면 게임이 로드된 상태(맵/월드)에서만 RPG 대화창이 나타납니다. 메인 메뉴나 캐릭터 생성 화면 등에서 대화창이 뜨는 문제를 방지합니다.</RPDia_OnlyShowInGameTooltip>
+
+    <!-- Settings Tabs -->
+    <RPDia_TabGeneral>일반</RPDia_TabGeneral>
+    <RPDia_TabAppearance>외형</RPDia_TabAppearance>
+    <RPDia_TabTyping>타이핑</RPDia_TabTyping>
+    <RPDia_TabAudioProfiles>오디오 프로필</RPDia_TabAudioProfiles>
 </LanguageData>

@@ -96,16 +96,21 @@ namespace RPGDialog
     {
         public static RPGDialogSettings settings;
         public static ModContentPack ModContent { get; private set; }
-        private Vector2 leftScrollPosition = Vector2.zero;
+
+        // Tabs
+        private enum SettingsTab { General, Appearance, Typing, AudioProfiles }
+        private SettingsTab currentTab = SettingsTab.General;
+
+        private Vector2 scrollPosition = Vector2.zero;
+        
+        // Audio Profile State
         private Vector2 storytellerNameScrollPosition = Vector2.zero;
         private Vector2 entityScrollPosition = Vector2.zero;
-
         private List<string> availableSounds;
         private List<StorytellerDef> availableStorytellers;
         private SortedDictionary<string, List<Pawn>> pawnsByFaction;
         private string selectedDefName;
         private string searchQuery = "";
-        
         private bool storytellersExpanded = false;
         private Dictionary<string, bool> factionExpansionStates = new Dictionary<string, bool>();
         private bool staticContentLoaded = false;
@@ -176,7 +181,6 @@ namespace RPGDialog
             
             if (Current.Game == null || Find.World == null) return;
 
-            // Optimized: Avoid LINQ .Where().ToList() to reduce allocations.
             foreach (var pawn in PawnsFinder.AllMapsAndWorld_Alive)
             {
                 if (!(pawn.RaceProps?.Humanlike ?? false)) continue;
@@ -208,104 +212,48 @@ namespace RPGDialog
         public override void DoSettingsWindowContents(Rect inRect)
         {
             InitializeStaticContentIfNeeded();
-            if (Current.Game != null)
+            if (Current.Game != null && currentTab == SettingsTab.AudioProfiles)
             {
-                RefreshPawnList();
+                RefreshPawnList(); // Refresh only when needed
             }
             
-            Color darkHeaderColor = new Color(0.12f, 0.12f, 0.12f);
-            Color darkHeaderBorderColor = new Color(0.35f, 0.35f, 0.35f);
+            // Draw Tabs
+            List<TabRecord> tabs = new List<TabRecord>();
+            tabs.Add(new TabRecord("RPDia_TabGeneral".Translate(), () => currentTab = SettingsTab.General, currentTab == SettingsTab.General));
+            tabs.Add(new TabRecord("RPDia_TabAppearance".Translate(), () => currentTab = SettingsTab.Appearance, currentTab == SettingsTab.Appearance));
+            tabs.Add(new TabRecord("RPDia_TabTyping".Translate(), () => currentTab = SettingsTab.Typing, currentTab == SettingsTab.Typing));
+            tabs.Add(new TabRecord("RPDia_TabAudioProfiles".Translate(), () => currentTab = SettingsTab.AudioProfiles, currentTab == SettingsTab.AudioProfiles));
 
-            // ##### 왼쪽 영역 #####
-            Rect leftOutRect = new Rect(inRect.x, inRect.y, inRect.width * 0.48f, inRect.height);
-            // Estimate the total height of the content. A bit of extra space is fine.
-            float leftScrollViewHeight = 750f; 
-            Rect leftViewRect = new Rect(0f, 0f, leftOutRect.width - 16f, leftScrollViewHeight);
+            // Fix overlap: standard settings window title height is around 40-50, so we start tabs lower.
+            // Using 45f offset for the tab row itself
+            Rect tabRect = new Rect(inRect.x, inRect.y + 45f, inRect.width, 30f);
+            TabDrawer.DrawTabs(tabRect, tabs);
 
-            Widgets.BeginScrollView(leftOutRect, ref leftScrollPosition, leftViewRect);
-
-            Listing_Standard leftListing = new Listing_Standard();
-            leftListing.Begin(leftViewRect);
-
-            leftListing.CheckboxLabeled("RPDia_DontPause".Translate(), ref settings.dontPauseOnOpen, "RPDia_DontPauseTooltip".Translate());
-            leftListing.CheckboxLabeled("RPDia_OnlyShowInGame".Translate(), ref settings.onlyShowInGame, "RPDia_OnlyShowInGameTooltip".Translate());
-            leftListing.CheckboxLabeled("RPDia_OpenWindowOnEvent".Translate(), ref settings.openWindowOnEvent, "RPDia_OpenWindowOnEventTooltip".Translate());
-            leftListing.GapLine();
-
-            leftListing.CheckboxLabeled("RPDia_UseOtherFactionNarrator".Translate(), ref settings.useFactionLeaderForOtherFactions, "RPDia_UseOtherFactionNarratorTooltip".Translate());
-            leftListing.CheckboxLabeled("RPDia_ShowTraderPortrait".Translate(), ref settings.showTraderPortrait, "RPDia_ShowTraderPortraitTooltip".Translate());
-            leftListing.CheckboxLabeled("RPDia_ShowNegotiatorPortrait".Translate(), ref settings.showNegotiatorPortrait, "RPDia_ShowNegotiatorPortraitTooltip".Translate());
+            // Calculate remaining height for content
+            // Top overlap buffer (45) + Tab height (30) + spacing (10) = ~85 offset
+            Rect contentRect = new Rect(inRect.x, inRect.y + 85f, inRect.width, inRect.height - 85f - 40f); // -40f for bottom reset button
             
-            if (ModsConfig.IdeologyActive)
-            {
-                leftListing.Gap(6f);
-                leftListing.Label("RPDia_DefaultNarrator".Translate() + ": " + GetDefaultSpeakerLabel(settings.defaultSpeaker));
-                if (leftListing.ButtonText(GetDefaultSpeakerLabel(settings.defaultSpeaker)))
-                {
-                    FloatMenuUtility.MakeMenu(
-                        Enum.GetNames(typeof(DefaultSpeaker)),
-                        (string str) => GetDefaultSpeakerLabel((DefaultSpeaker)Enum.Parse(typeof(DefaultSpeaker), str)),
-                        (string str) => () => { settings.defaultSpeaker = (DefaultSpeaker)Enum.Parse(typeof(DefaultSpeaker), str); UIStyles.Reset(); });
-                }
-            }
-            leftListing.GapLine();
+            // Reset Button Area at the bottom
+            Rect resetRect = new Rect(inRect.x, inRect.y + inRect.height - 35f, inRect.width, 30f);
 
-            leftListing.Label("RPDia_WindowPosition".Translate());
-            if (leftListing.ButtonText(settings.position.ToString()))
+            switch (currentTab)
             {
-                FloatMenuUtility.MakeMenu(Enum.GetNames(typeof(WindowPosition)), (string str) => str, (string str) => () => { settings.position = (WindowPosition)Enum.Parse(typeof(WindowPosition), str); });
+                case SettingsTab.General:
+                    DrawGeneralSettings(contentRect);
+                    break;
+                case SettingsTab.Appearance:
+                    DrawAppearanceSettings(contentRect);
+                    break;
+                case SettingsTab.Typing:
+                    DrawTypingSettings(contentRect);
+                    break;
+                case SettingsTab.AudioProfiles:
+                    DrawAudioProfilesSettings(contentRect);
+                    break;
             }
 
-            if (AppDomain.CurrentDomain.GetAssemblies().Any(a => a.GetName().Name == "EchoColony"))
-            {
-                leftListing.Gap(6f);
-                leftListing.Label("RPDia_Echo_WindowPosition".Translate());
-                if (leftListing.ButtonText(settings.echoPosition.ToString()))
-                {
-                    FloatMenuUtility.MakeMenu(Enum.GetNames(typeof(WindowPosition)), (string str) => str, (string str) => () => { settings.echoPosition = (WindowPosition)Enum.Parse(typeof(WindowPosition), str); });
-                }
-            }
-            
-            leftListing.Gap(6f);
-            leftListing.Label("RPDia_DialogFontSize".Translate() + ": " + Mathf.RoundToInt(settings.dialogFontSize).ToString() + "px");
-            settings.dialogFontSize = Widgets.HorizontalSlider(leftListing.GetRect(22f), settings.dialogFontSize, 12f, 28f, roundTo: 1f);
-            
-            leftListing.Gap(6f);
-            leftListing.Label("RPDia_DialogButtonFontSize".Translate() + ": " + Mathf.RoundToInt(settings.dialogButtonFontSize).ToString() + "px");
-            settings.dialogButtonFontSize = Widgets.HorizontalSlider(leftListing.GetRect(22f), settings.dialogButtonFontSize, 10f, 24f, roundTo: 1f);
-            
-            leftListing.Gap(6f);
-            leftListing.Label("RPDia_ChoiceButtonFontSize".Translate() + ": " + Mathf.RoundToInt(settings.choiceButtonFontSize).ToString() + "px");
-            settings.choiceButtonFontSize = Widgets.HorizontalSlider(leftListing.GetRect(22f), settings.choiceButtonFontSize, 10f, 24f, roundTo: 1f);
-            leftListing.GapLine();
-
-            leftListing.Label("RPDia_WindowWidth".Translate() + ": " + settings.windowWidthScale.ToStringPercent());
-            settings.windowWidthScale = Widgets.HorizontalSlider(leftListing.GetRect(22f), settings.windowWidthScale, 0.25f, 0.8f);
-            
-            leftListing.Gap(6f);
-            leftListing.Label("RPDia_WindowHeight".Translate() + ": " + settings.windowHeightScale.ToStringPercent());
-            settings.windowHeightScale = Widgets.HorizontalSlider(leftListing.GetRect(22f), settings.windowHeightScale, 0.25f, 0.8f);
-            leftListing.GapLine();
-
-            leftListing.CheckboxLabeled("RPDia_TypingEffect".Translate(), ref settings.typingEffectEnabled, "RPDia_TypingEffectTooltip".Translate());
-            if (settings.typingEffectEnabled)
-            {
-                leftListing.Gap(6f);
-                leftListing.CheckboxLabeled("RPDia_TypingSound".Translate(), ref settings.typingSoundEnabled, "RPDia_TypingSoundTooltip".Translate());
-                if (settings.typingSoundEnabled)
-                {
-                    leftListing.Label("RPDia_TypingSoundVolume".Translate() + ": " + settings.typingSoundVolume.ToStringPercent());
-                    settings.typingSoundVolume = leftListing.Slider(settings.typingSoundVolume, 0f, 1f);
-                }
-                
-                leftListing.Gap(6f);
-                leftListing.Label("RPDia_TypingSpeed".Translate() + ": " + Mathf.RoundToInt(settings.typingSpeed).ToString() + " " + "RPDia_CharsPerSecond".Translate());
-                settings.typingSpeed = Widgets.HorizontalSlider(leftListing.GetRect(22f), settings.typingSpeed, 20f, 60f, roundTo: 1f);
-            }
-
-            leftListing.Gap(24f);
-
-            if (leftListing.ButtonText("RPDia_ResetSettings".Translate()))
+            // Draw Reset Button (Always visible)
+            if (Widgets.ButtonText(resetRect, "RPDia_ResetSettings".Translate()))
             {
                 Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("RPDia_ResetSettings_Confirm".Translate(), () =>
                 {
@@ -313,18 +261,124 @@ namespace RPGDialog
                 }, true));
             }
 
-            leftListing.End();
-            Widgets.EndScrollView();
+            base.DoSettingsWindowContents(inRect);
+        }
 
-            // ##### 오른쪽 영역 #####
-            Rect rightRect = new Rect(inRect.x + inRect.width * 0.52f, inRect.y, inRect.width * 0.48f, inRect.height);
+        private void DrawGeneralSettings(Rect inRect)
+        {
+            Listing_Standard listing = new Listing_Standard();
+            listing.Begin(inRect);
+
+            listing.CheckboxLabeled("RPDia_DontPause".Translate(), ref settings.dontPauseOnOpen, "RPDia_DontPauseTooltip".Translate());
+            listing.CheckboxLabeled("RPDia_OnlyShowInGame".Translate(), ref settings.onlyShowInGame, "RPDia_OnlyShowInGameTooltip".Translate());
+            listing.CheckboxLabeled("RPDia_OpenWindowOnEvent".Translate(), ref settings.openWindowOnEvent, "RPDia_OpenWindowOnEventTooltip".Translate());
+            listing.GapLine();
+
+            listing.CheckboxLabeled("RPDia_UseOtherFactionNarrator".Translate(), ref settings.useFactionLeaderForOtherFactions, "RPDia_UseOtherFactionNarratorTooltip".Translate());
+
+            if (ModsConfig.IdeologyActive)
+            {
+                listing.Gap(6f);
+                listing.Label("RPDia_DefaultNarrator".Translate() + ": " + GetDefaultSpeakerLabel(settings.defaultSpeaker));
+                if (listing.ButtonText(GetDefaultSpeakerLabel(settings.defaultSpeaker)))
+                {
+                    FloatMenuUtility.MakeMenu(
+                        Enum.GetNames(typeof(DefaultSpeaker)),
+                        (string str) => GetDefaultSpeakerLabel((DefaultSpeaker)Enum.Parse(typeof(DefaultSpeaker), str)),
+                        (string str) => () => { settings.defaultSpeaker = (DefaultSpeaker)Enum.Parse(typeof(DefaultSpeaker), str); UIStyles.Reset(); });
+                }
+            }
+            // Removed Reset Button from here
+
+            listing.End();
+        }
+
+        private void DrawAppearanceSettings(Rect inRect)
+        {
+            Listing_Standard listing = new Listing_Standard();
+            listing.Begin(inRect);
+
+            listing.CheckboxLabeled("RPDia_ShowTraderPortrait".Translate(), ref settings.showTraderPortrait, "RPDia_ShowTraderPortraitTooltip".Translate());
+            listing.CheckboxLabeled("RPDia_ShowNegotiatorPortrait".Translate(), ref settings.showNegotiatorPortrait, "RPDia_ShowNegotiatorPortraitTooltip".Translate());
+            listing.GapLine();
+
+            listing.Label("RPDia_WindowPosition".Translate());
+            if (listing.ButtonText(settings.position.ToString()))
+            {
+                FloatMenuUtility.MakeMenu(Enum.GetNames(typeof(WindowPosition)), (string str) => str, (string str) => () => { settings.position = (WindowPosition)Enum.Parse(typeof(WindowPosition), str); });
+            }
+
+            if (AppDomain.CurrentDomain.GetAssemblies().Any(a => a.GetName().Name == "EchoColony"))
+            {
+                listing.Gap(6f);
+                listing.Label("RPDia_Echo_WindowPosition".Translate());
+                if (listing.ButtonText(settings.echoPosition.ToString()))
+                {
+                    FloatMenuUtility.MakeMenu(Enum.GetNames(typeof(WindowPosition)), (string str) => str, (string str) => () => { settings.echoPosition = (WindowPosition)Enum.Parse(typeof(WindowPosition), str); });
+                }
+            }
+            
+            listing.Gap(6f);
+            listing.Label("RPDia_DialogFontSize".Translate() + ": " + Mathf.RoundToInt(settings.dialogFontSize).ToString() + "px");
+            settings.dialogFontSize = Widgets.HorizontalSlider(listing.GetRect(22f), settings.dialogFontSize, 12f, 28f, roundTo: 1f);
+            
+            listing.Gap(6f);
+            listing.Label("RPDia_DialogButtonFontSize".Translate() + ": " + Mathf.RoundToInt(settings.dialogButtonFontSize).ToString() + "px");
+            settings.dialogButtonFontSize = Widgets.HorizontalSlider(listing.GetRect(22f), settings.dialogButtonFontSize, 10f, 24f, roundTo: 1f);
+            
+            listing.Gap(6f);
+            listing.Label("RPDia_ChoiceButtonFontSize".Translate() + ": " + Mathf.RoundToInt(settings.choiceButtonFontSize).ToString() + "px");
+            settings.choiceButtonFontSize = Widgets.HorizontalSlider(listing.GetRect(22f), settings.choiceButtonFontSize, 10f, 24f, roundTo: 1f);
+            listing.GapLine();
+
+            listing.Label("RPDia_WindowWidth".Translate() + ": " + settings.windowWidthScale.ToStringPercent());
+            settings.windowWidthScale = Widgets.HorizontalSlider(listing.GetRect(22f), settings.windowWidthScale, 0.25f, 0.8f);
+            
+            listing.Gap(6f);
+            listing.Label("RPDia_WindowHeight".Translate() + ": " + settings.windowHeightScale.ToStringPercent());
+            settings.windowHeightScale = Widgets.HorizontalSlider(listing.GetRect(22f), settings.windowHeightScale, 0.25f, 0.8f);
+
+            listing.End();
+        }
+
+        private void DrawTypingSettings(Rect inRect)
+        {
+            Listing_Standard listing = new Listing_Standard();
+            listing.Begin(inRect);
+
+            listing.CheckboxLabeled("RPDia_TypingEffect".Translate(), ref settings.typingEffectEnabled, "RPDia_TypingEffectTooltip".Translate());
+            if (settings.typingEffectEnabled)
+            {
+                listing.Gap(6f);
+                listing.CheckboxLabeled("RPDia_TypingSound".Translate(), ref settings.typingSoundEnabled, "RPDia_TypingSoundTooltip".Translate());
+                if (settings.typingSoundEnabled)
+                {
+                    listing.Label("RPDia_TypingSoundVolume".Translate() + ": " + settings.typingSoundVolume.ToStringPercent());
+                    settings.typingSoundVolume = listing.Slider(settings.typingSoundVolume, 0f, 1f);
+                }
+                
+                listing.Gap(6f);
+                listing.Label("RPDia_TypingSpeed".Translate() + ": " + Mathf.RoundToInt(settings.typingSpeed).ToString() + " " + "RPDia_CharsPerSecond".Translate());
+                settings.typingSpeed = Widgets.HorizontalSlider(listing.GetRect(22f), settings.typingSpeed, 20f, 60f, roundTo: 1f);
+            }
+
+            listing.End();
+        }
+
+        private void DrawAudioProfilesSettings(Rect inRect)
+        {
+            Color darkHeaderColor = new Color(0.12f, 0.12f, 0.12f);
+            Color darkHeaderBorderColor = new Color(0.35f, 0.35f, 0.35f);
+
+            // Split into two columns
+            Rect rightRect = inRect; // Reusing previous logic name for minimal diff
             
             float storytellerHeight = inRect.height * 0.4f;
             Rect storytellerRect = new Rect(rightRect.x, rightRect.y, rightRect.width, storytellerHeight);
-            float gap = 12f; // <-- 간격을 24f에서 12f로 줄였습니다.
+            float gap = 12f;
             Rect soundSettingsRect = new Rect(rightRect.x, rightRect.y + storytellerHeight + gap, rightRect.width, inRect.height - storytellerHeight - gap);
 
-            // --- 스토리텔러 이름 설정 (위) ---
+            // --- Storyteller Names (Top) ---
             Widgets.Label(new Rect(storytellerRect.x, storytellerRect.y, storytellerRect.width, 30f), "RPDia_StorytellerNameSettings".Translate());
             Rect scrollContainerRect = new Rect(storytellerRect.x, storytellerRect.y + 30f, storytellerRect.width, storytellerRect.height - 30f);
             
@@ -347,11 +401,11 @@ namespace RPGDialog
             innerStorytellerListing.End();
             Widgets.EndScrollView();
             
-            // --- 커스텀 타이핑 사운드 설정 (아래) ---
+            // --- Custom Typing Sounds (Bottom) ---
             Widgets.Label(new Rect(soundSettingsRect.x, soundSettingsRect.y, soundSettingsRect.width, 30f), "RPDia_CustomTypingSoundSettings".Translate());
             
             float buttonHeight = 30f;
-            float boxHeight = soundSettingsRect.height - 30f - buttonHeight - 12f - 36f; // Adjusted for the extra button
+            float boxHeight = soundSettingsRect.height - 30f - buttonHeight - 12f - 36f; 
             Rect boxRect = new Rect(soundSettingsRect.x, soundSettingsRect.y + 30f, soundSettingsRect.width, boxHeight);
             Widgets.DrawBox(boxRect);
 
@@ -377,11 +431,10 @@ namespace RPGDialog
             Rect entityListRect = new Rect(innerBoxRect.x, searchRect.yMax + 4f, leftColumnWidth, innerBoxRect.height - searchRect.height - 4f);
             Rect soundListRect = new Rect(innerBoxRect.x + innerBoxRect.width / 2 + 5f, innerBoxRect.y, innerBoxRect.width / 2 - 5f, innerBoxRect.height);
 
-            // --- 개체 목록 (아코디언 UI) ---
+            // --- Entity List (Accordion UI) ---
             var filteredPawnsByFaction = new SortedDictionary<string, List<Pawn>>();
             if (pawnsByFaction != null)
             {
-                // Optimized: Avoid LINQ in a frequently-called UI method.
                 foreach (var entry in pawnsByFaction)
                 {
                     if (string.IsNullOrEmpty(searchQuery))
@@ -390,7 +443,7 @@ namespace RPGDialog
                         continue;
                     }
                     
-                    List<Pawn> filteredPawns = null; // Lazy initialization
+                    List<Pawn> filteredPawns = null;
                     foreach (var pawn in entry.Value)
                     {
                         if (pawn.Name.ToStringShort.IndexOf(searchQuery, StringComparison.OrdinalIgnoreCase) >= 0)
@@ -424,7 +477,7 @@ namespace RPGDialog
                     entityViewHeight += Mathf.Max(minItemHeight, Text.CalcHeight(label, availableWidthForText - 10f));
                 }
             }
-            entityViewHeight += 12f; // GapLine
+            entityViewHeight += 12f; 
 
             foreach (var entry in filteredPawnsByFaction)
             {
@@ -451,6 +504,7 @@ namespace RPGDialog
             Listing_Standard entityListing = new Listing_Standard();
             entityListing.Begin(entityViewRect);
             
+            // Re-draw listing logic (Simplified logic from previous, keeping it clean)
             string storytellerHeaderTextDraw = $"{"Storyteller".Translate()} ({availableStorytellers.Count}) {(storytellersExpanded ? "▲" : "▼")}";
             float storytellerHeaderHeightDraw = Mathf.Max(minItemHeight, Text.CalcHeight(storytellerHeaderTextDraw, entityViewRect.width - 10f));
             Rect storytellerHeaderRect = entityListing.GetRect(storytellerHeaderHeightDraw);
@@ -535,7 +589,7 @@ namespace RPGDialog
                         
                         Text.Anchor = TextAnchor.MiddleLeft;
                         Rect labelRect = itemRect;
-                        labelRect.xMin += 15f; // Indent for pawns
+                        labelRect.xMin += 15f; 
                         Widgets.Label(labelRect, label);
                         Text.Anchor = TextAnchor.UpperLeft;
                     }
@@ -545,7 +599,7 @@ namespace RPGDialog
             entityListing.End();
             Widgets.EndScrollView();
             
-            // --- 사운드 목록 ---
+            // --- Sound List ---
             if (!string.IsNullOrEmpty(selectedDefName))
             {
                 Listing_Standard soundOptionsListing = new Listing_Standard();
@@ -569,7 +623,6 @@ namespace RPGDialog
                 {
                     Rect itemRect = soundOptionsListing.GetRect(30f);
 
-                    // 항목 선택 버튼
                     Rect selectionButtonRect = new Rect(itemRect.x, itemRect.y, itemRect.width - 40f, itemRect.height);
                     bool isSelected = sound == currentSoundForDef;
                     Widgets.DrawOptionBackground(selectionButtonRect, isSelected);
@@ -598,7 +651,6 @@ namespace RPGDialog
                         SoundDefOf.Tick_Tiny.PlayOneShotOnCamera(null);
                     }
 
-                    // 미리 듣기 버튼
                     Rect previewButtonRect = new Rect(itemRect.xMax - 30f, itemRect.y + (itemRect.height - 24f) / 2, 24f, 24f);
                     if (Widgets.ButtonImage(previewButtonRect, TexButton.SpeedButtonTextures[1]))
                     {
@@ -615,7 +667,7 @@ namespace RPGDialog
                 soundOptionsListing.End();
             }
 
-            // 폴더 열기 버튼
+            // Folder Buttons
             Rect folderButtonRect = new Rect(soundSettingsRect.x, boxRect.yMax + 12f, soundSettingsRect.width, buttonHeight);
             if (Widgets.ButtonText(folderButtonRect, "RPDia_OpenTypingSoundsFolder".Translate()))
             {
@@ -637,8 +689,6 @@ namespace RPGDialog
                 }
                 catch (Exception e) { Log.Error($"Could not open custom portraits folder: {e.Message}"); }
             }
-
-            base.DoSettingsWindowContents(inRect);
         }
 
         public override string SettingsCategory()
