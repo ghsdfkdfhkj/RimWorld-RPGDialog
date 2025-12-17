@@ -32,7 +32,7 @@ namespace RPGDialog
 				var storytellerDef = Find.Storyteller?.def;
 				if (storytellerDef != null)
 				{
-					if (RPGDialogMod.settings.customStorytellerTypingSounds.TryGetValue(storytellerDef.defName, out string storytellerSound))
+					if (SettingsCore.settings.customStorytellerTypingSounds.TryGetValue(storytellerDef.defName, out string storytellerSound))
 					{
 						soundKey = storytellerSound;
 					}
@@ -102,7 +102,7 @@ namespace RPGDialog
             if (sound != null)
             {
                 SoundInfo info = SoundInfo.OnCamera(MaintenanceType.None);
-                info.volumeFactor = RPGDialogMod.settings.typingSoundVolume;
+                info.volumeFactor = SettingsCore.settings.typingSoundVolume;
                 sound.PlayOneShot(info);
             }
         }
@@ -113,7 +113,7 @@ namespace RPGDialog
 			{
 				return fullPath != null;
 			}
-			string typingSoundPath = Path.Combine(RPGDialogMod.ModContent.RootDir, "Sounds", "Typing").Replace('\\', '/');
+			string typingSoundPath = Path.Combine(SettingsCore.ModContent.RootDir, "Sounds", "Typing").Replace('\\', '/');
 			string wav = Path.Combine(typingSoundPath, key + ".wav").Replace('\\', '/');
 			if (File.Exists(wav))
 			{

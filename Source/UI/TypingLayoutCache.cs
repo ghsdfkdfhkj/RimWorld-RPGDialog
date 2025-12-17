@@ -107,7 +107,7 @@ namespace RPGDialog
 		{
 			var indices = new List<int> { 0 };
 			if (string.IsNullOrEmpty(text)) return indices;
-			float fontSize = RPGDialogMod.settings != null ? RPGDialogMod.settings.dialogFontSize : style.fontSize;
+			float fontSize = SettingsCore.settings != null ? SettingsCore.settings.dialogFontSize : style.fontSize;
 			var settings = new TextGenerationSettings
 			{
 				font = style.font,

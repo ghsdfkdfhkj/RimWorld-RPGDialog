@@ -7,7 +7,7 @@ namespace RPGDialog
     {
         public static string GetStorytellerName(StorytellerDef def)
         {
-            if (RPGDialogMod.settings.storytellerNames.TryGetValue(def.defName, out string customName) && !string.IsNullOrEmpty(customName))
+            if (SettingsCore.settings.storytellerNames.TryGetValue(def.defName, out string customName) && !string.IsNullOrEmpty(customName))
             {
                 return customName;
             }
@@ -18,11 +18,11 @@ namespace RPGDialog
         {
             if (string.IsNullOrEmpty(name) || name == def.label)
             {
-                RPGDialogMod.settings.storytellerNames.Remove(def.defName);
+                SettingsCore.settings.storytellerNames.Remove(def.defName);
             }
             else
             {
-                RPGDialogMod.settings.storytellerNames[def.defName] = name;
+                SettingsCore.settings.storytellerNames[def.defName] = name;
             }
         }
     }

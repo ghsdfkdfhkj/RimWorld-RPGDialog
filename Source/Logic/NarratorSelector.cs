@@ -17,14 +17,14 @@ namespace RPGDialog
             Pawn chosen = originalSpeaker;
 
             // If the message is from another faction and the setting is enabled, its leader should be the speaker.
-            if (RPGDialogMod.settings.useFactionLeaderForOtherFactions && factionToDisplay != null && !factionToDisplay.IsPlayer && factionToDisplay.leader != null)
+            if (SettingsCore.settings.useFactionLeaderForOtherFactions && factionToDisplay != null && !factionToDisplay.IsPlayer && factionToDisplay.leader != null)
             {
                 chosen = factionToDisplay.leader;
             }
             else
             {
                 // Only check player's settings if it's not a message from another faction's leader
-                var defaultSpeaker = RPGDialogMod.settings.defaultSpeaker;
+                var defaultSpeaker = SettingsCore.settings.defaultSpeaker;
 
                 if (defaultSpeaker == DefaultSpeaker.Leader)
                 {

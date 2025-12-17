@@ -23,9 +23,9 @@ namespace RPGDialog
 
 		public static void EnsureInitialized()
 		{
-			float dialogFontSize = RPGDialogMod.settings?.dialogFontSize ?? 24f;
-			float dialogButtonFontSize = RPGDialogMod.settings?.dialogButtonFontSize ?? 20f;
-			float choiceButtonFontSize = RPGDialogMod.settings?.choiceButtonFontSize ?? 18f;
+			float dialogFontSize = SettingsCore.settings?.dialogFontSize ?? 24f;
+			float dialogButtonFontSize = SettingsCore.settings?.dialogButtonFontSize ?? 20f;
+			float choiceButtonFontSize = SettingsCore.settings?.choiceButtonFontSize ?? 18f;
 
 			if (s_initialized && Mathf.Approximately(s_lastDialogFontSize, dialogFontSize) &&
 				Mathf.Approximately(s_lastDialogButtonFontSize, dialogButtonFontSize) &&

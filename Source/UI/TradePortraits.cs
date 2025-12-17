@@ -33,12 +33,12 @@ namespace RPGDialog
 
             // Proceed with drawing the portraits since the trade window is active.
             InitStyles();
-            if (RPGDialogMod.settings.showTraderPortrait)
+            if (SettingsCore.settings.showTraderPortrait)
             {
                 DrawTraderPortrait(tradeWindow.windowRect);
             }
 
-            if (RPGDialogMod.settings.showNegotiatorPortrait)
+            if (SettingsCore.settings.showNegotiatorPortrait)
             {
                 DrawNegotiatorPortrait(tradeWindow.windowRect);
             }

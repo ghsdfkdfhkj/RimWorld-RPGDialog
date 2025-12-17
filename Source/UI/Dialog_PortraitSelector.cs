@@ -36,7 +36,7 @@ namespace RPGDialog
 
             if (Widgets.ButtonText(new Rect(0, 40f, 150f, 30f), "RPDia_ResetToDefault".Translate()))
             {
-                 RPGDialogMod.settings.customPortraitMappings.Remove(mappingKey);
+                 SettingsCore.settings.customPortraitMappings.Remove(mappingKey);
                  PortraitLoader.ClearCache();
                  Close();
             }
@@ -84,7 +84,7 @@ namespace RPGDialog
                 Widgets.DrawHighlightIfMouseover(itemRect);
                 if (Widgets.ButtonInvisible(itemRect))
                 {
-                    RPGDialogMod.settings.customPortraitMappings[mappingKey] = portraitName;
+                    SettingsCore.settings.customPortraitMappings[mappingKey] = portraitName;
                     PortraitLoader.ClearCache();
                     Close();
                 }

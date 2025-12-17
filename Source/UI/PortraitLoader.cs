@@ -14,7 +14,7 @@ namespace RPGDialog
         {
             if (manualTexturePath == null)
             {
-                manualTexturePath = System.IO.Path.Combine(RPGDialogMod.ModContent.RootDir, "Textures", "UI", "Storyteller");
+                manualTexturePath = System.IO.Path.Combine(SettingsCore.ModContent.RootDir, "Textures", "UI", "Storyteller");
             }
             return manualTexturePath;
         }
@@ -46,7 +46,7 @@ namespace RPGDialog
             
             // Check for Mapping first
             string targetFileName = storytellerDefName;
-            if (RPGDialogMod.settings.customPortraitMappings.TryGetValue(storytellerDefName, out string mapped))
+            if (SettingsCore.settings.customPortraitMappings.TryGetValue(storytellerDefName, out string mapped))
             {
                 targetFileName = mapped;
             }

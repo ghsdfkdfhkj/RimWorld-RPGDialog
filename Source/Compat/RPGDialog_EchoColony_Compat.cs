@@ -154,7 +154,7 @@ namespace RPGDialog
         public RPGStyleEchoColonyWindow(object context)
         {
             this.chatContext = context;
-            this.forcePause = !RPGDialogMod.settings.dontPauseOnOpen;
+            this.forcePause = !SettingsCore.settings.dontPauseOnOpen;
             this.draggable = false;
             this.preventCameraMotion = false;
             this.absorbInputAroundWindow = false;
@@ -222,7 +222,7 @@ namespace RPGDialog
         {
             Rect rect = new Rect(0f, 0f, InitialSize.x, InitialSize.y);
             const float margin = 125f;
-            switch (RPGDialogMod.settings.echoPosition)
+            switch (SettingsCore.settings.echoPosition)
             {
                 case WindowPosition.Top: rect.y = margin; break;
                 case WindowPosition.Middle: rect.y = (UI.screenHeight - rect.height) / 2f; break;
@@ -256,7 +256,7 @@ namespace RPGDialog
             // Keep window position in sync with settings every frame so changes apply immediately
             Rect rect = this.windowRect;
             const float margin = 125f;
-            switch (RPGDialogMod.settings.echoPosition)
+            switch (SettingsCore.settings.echoPosition)
             {
                 case WindowPosition.Top: rect.y = margin; break;
                 case WindowPosition.Middle: rect.y = (UI.screenHeight - rect.height) / 2f; break;
@@ -362,7 +362,7 @@ namespace RPGDialog
             
             bool isLastPage = currentPage == totalPages - 1;
 
-                if (isTypingEffectActive && isLastPage && RPGDialogMod.settings.typingEffectEnabled)
+                if (isTypingEffectActive && isLastPage && SettingsCore.settings.typingEffectEnabled)
                 {
                     int lastLineInPageIdx = pageText.LastIndexOf(lastMessageSpeaker);
                     if (lastLineInPageIdx != -1)

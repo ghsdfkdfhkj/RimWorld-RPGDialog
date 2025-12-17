@@ -76,7 +76,7 @@ namespace RPGDialog
 
             // FAILSAFE: If enabled, only show RPG Dialog when actually playing the game (Map/World).
             // This prevents the dialog from capturing UI in Main Menu, Pawn Creation, etc.
-            if (RPGDialogMod.settings.onlyShowInGame && Current.ProgramState != ProgramState.Playing)
+            if (SettingsCore.settings.onlyShowInGame && Current.ProgramState != ProgramState.Playing)
             {
                 return true;
             }
@@ -96,7 +96,7 @@ namespace RPGDialog
             }
 
             // Apply settings
-            if (RPGDialogMod.settings.dontPauseOnOpen) __instance.forcePause = false;
+            if (SettingsCore.settings.dontPauseOnOpen) __instance.forcePause = false;
             __instance.preventCameraMotion = false;
             __instance.absorbInputAroundWindow = false;
 
@@ -130,8 +130,8 @@ namespace RPGDialog
                 }
 
                 // Setup window rect using settings
-                __instance.windowRect.width = UI.screenWidth * RPGDialogMod.settings.windowWidthScale * scale;
-                __instance.windowRect.height = UI.screenHeight * RPGDialogMod.settings.windowHeightScale * scale;
+                __instance.windowRect.width = UI.screenWidth * SettingsCore.settings.windowWidthScale * scale;
+                __instance.windowRect.height = UI.screenHeight * SettingsCore.settings.windowHeightScale * scale;
 
                 // Button layout from right to left
                 float currentButtonX = inRect.width;
@@ -301,7 +301,7 @@ namespace RPGDialog
 
                 bool isTyping = false;
 
-                if (RPGDialogMod.settings.typingEffectEnabled)
+                if (SettingsCore.settings.typingEffectEnabled)
                 {
                     bool pageHasBeenTyped = session.fullyTypedPagesCache.TryGetValue(node, out var typedPages) && typedPages.Contains(currentPage);
 
@@ -313,7 +313,7 @@ namespace RPGDialog
                             isTyping = true;
                             if (Event.current.type == EventType.Repaint)
                             {
-                                float speed = RPGDialogMod.settings.typingSpeed;
+                                float speed = SettingsCore.settings.typingSpeed;
                                 if (speed <= 0) speed = 35f; // Safety check
                                 float delay = 1.0f / speed;
                                 
@@ -326,13 +326,13 @@ namespace RPGDialog
                                 }
                             }
 
-                            if (Event.current.type == EventType.Repaint && RPGDialogMod.settings.typingSoundEnabled && Time.realtimeSinceStartup - session.lastSoundTime > 0.08f)
+                            if (Event.current.type == EventType.Repaint && SettingsCore.settings.typingSoundEnabled && Time.realtimeSinceStartup - session.lastSoundTime > 0.08f)
                             {
                                 SoundDef typingSound = GetTypingSound(resolvedPawn);
                                 if (typingSound != null)
                                 {
                                     SoundInfo info = SoundInfo.OnCamera(MaintenanceType.None);
-                                    info.volumeFactor = RPGDialogMod.settings.typingSoundVolume;
+                                    info.volumeFactor = SettingsCore.settings.typingSoundVolume;
                                     typingSound.PlayOneShot(info);
                                 }
                                 session.lastSoundTime = Time.realtimeSinceStartup;
@@ -370,7 +370,7 @@ namespace RPGDialog
                         // Auto-Advance logic at the last page
                         if (node.options.NullOrEmpty())
                         {
-                            if (RPGDialogMod.settings.autoMode_CloseAtEnd)
+                            if (SettingsCore.settings.autoMode_CloseAtEnd)
                             {
                                 __instance. Close();
                             }
@@ -589,7 +589,7 @@ namespace RPGDialog
                                                     t.Method("Activate").GetValue();
                                                     s_activeChoiceMenu = null; // Mark as closed after selection
                                                 };
-                                                s_activeChoiceMenu = new ChoiceMenuWindow(choices, onSelect, __instance.windowRect, RPGDialogMod.settings.position, __instance);
+                                                s_activeChoiceMenu = new ChoiceMenuWindow(choices, onSelect, __instance.windowRect, SettingsCore.settings.position, __instance);
                                                 Find.WindowStack.Add(s_activeChoiceMenu);
                                             }
                                         }
@@ -651,7 +651,7 @@ namespace RPGDialog
 
         private static bool IsTyping(DialogSession session, DiaNode node, int currentPage)
         {
-            if (!RPGDialogMod.settings.typingEffectEnabled) return false;
+            if (!SettingsCore.settings.typingEffectEnabled) return false;
 
             bool pageHasBeenTyped = session.fullyTypedPagesCache.TryGetValue(node, out var typedPages) && typedPages.Contains(currentPage);
             if (pageHasBeenTyped) return false;
@@ -696,7 +696,7 @@ namespace RPGDialog
             {
                 Rect rect = __instance.windowRect;
                 const float margin = 125f;
-                switch (RPGDialogMod.settings.position)
+                switch (SettingsCore.settings.position)
                 {
                     case WindowPosition.Top:
                         rect.y = margin;
@@ -723,7 +723,7 @@ namespace RPGDialog
         {
             if (let.arrivalTick > Find.TickManager.TicksGame) return;
 
-            if (RPGDialogMod.settings.openWindowOnEvent && let is ChoiceLetter choiceLetter && let.CanShowInLetterStack)
+            if (SettingsCore.settings.openWindowOnEvent && let is ChoiceLetter choiceLetter && let.CanShowInLetterStack)
             {
                 choiceLetter.OpenLetter();
             }
