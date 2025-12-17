@@ -14,7 +14,7 @@ namespace RPGDialog
         {
             if (manualTexturePath == null)
             {
-                manualTexturePath = System.IO.Path.Combine(SettingsCore.ModContent.RootDir, "Textures", "UI", "Storyteller");
+                manualTexturePath = System.IO.Path.Combine(SettingsCore.ModContent.RootDir, "Textures", "UI", "Portraits");
             }
             return manualTexturePath;
         }
@@ -38,6 +38,24 @@ namespace RPGDialog
             }
             catch {}
             return list;
+        }
+
+        public static Texture2D GetRawPortrait(string fileName)
+        {
+             try 
+             {
+                 string path = GetManualTexturePath();
+                 string pngPath = System.IO.Path.Combine(path, fileName + ".png");
+                 if (System.IO.File.Exists(pngPath)) return LoadTextureFromFile(pngPath);
+                 
+                 string jpgPath = System.IO.Path.Combine(path, fileName + ".jpg");
+                 if (System.IO.File.Exists(jpgPath)) return LoadTextureFromFile(jpgPath);
+             }
+             catch (System.Exception e)
+             {
+                 Log.Warning($"[RPGDialog] Failed to load raw portrait {fileName}: {e.Message}");
+             }
+             return null;
         }
 
 		public static Texture2D TryLoadCustomPortrait(string storytellerDefName)

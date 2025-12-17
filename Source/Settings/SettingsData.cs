@@ -93,6 +93,7 @@ namespace RPGDialog
             showNegotiatorPortrait = true;
             storytellerNames?.Clear();
             customStorytellerTypingSounds?.Clear();
+            customPortraitMappings?.Clear();
             UIStyles.Reset();
         }
     }

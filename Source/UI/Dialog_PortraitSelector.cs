@@ -75,7 +75,8 @@ namespace RPGDialog
                 // Let's assume TryLoadCustomPortrait works if we pass the filename as if it were a defname, 
                 // AND there is no mapping for that filename key. 
                 
-                Texture2D tex = PortraitLoader.TryLoadCustomPortrait(portraitName);
+                // Use GetRawPortrait to bypass any mappings and see the actual file content
+                Texture2D tex = PortraitLoader.GetRawPortrait(portraitName);
                 if (tex != null)
                 {
                     GUI.DrawTexture(itemRect, tex, ScaleMode.ScaleToFit);

@@ -20,9 +20,8 @@ namespace RPGDialog
         public static List<StorytellerDef> availableStorytellers;
         public static SortedDictionary<string, List<Pawn>> pawnsByFaction;
         public static bool staticContentLoaded = false;
+
         public static Dictionary<string, bool> soundFileExistsCache = new Dictionary<string, bool>();
-        public static string lastSoundScanStatus = "";
-        public static string lastPortraitScanStatus = "";
 
         // Helper Methods from Mod class
         public static bool SoundFileExistsFor(string key)
@@ -80,18 +79,11 @@ namespace RPGDialog
                     
                     availableSounds.AddRange(wavs.Select(System.IO.Path.GetFileNameWithoutExtension));
                     availableSounds.AddRange(oggs.Select(System.IO.Path.GetFileNameWithoutExtension));
-
-                    lastSoundScanStatus = string.Format("RPDia_SoundScanStatus".Translate(), soundsPath, availableSounds.Count - 1); // -1 for Default
-                }
-                else
-                {
-                    lastSoundScanStatus = "Directory not found: " + soundsPath;
                 }
             }
             catch (Exception e) 
             { 
                 Log.Error($"Error loading custom typing sounds: {e.Message}");
-                lastSoundScanStatus = "Error: " + e.Message;
             }
         }
 
@@ -100,21 +92,16 @@ namespace RPGDialog
             PortraitLoader.ClearCache();
             try
             {
-                string path = System.IO.Path.Combine(SettingsCore.ModContent.RootDir, "Textures", "UI", "Storyteller");
+                string path = System.IO.Path.Combine(SettingsCore.ModContent.RootDir, "Textures", "UI", "Portraits");
                 if (System.IO.Directory.Exists(path))
                 {
                     var pngs = System.IO.Directory.GetFiles(path, "*.png");
                     var jpgs = System.IO.Directory.GetFiles(path, "*.jpg");
-                    lastPortraitScanStatus = string.Format("RPDia_SoundScanStatus".Translate(), path, pngs.Length + jpgs.Length);
-                }
-                else
-                {
-                    lastPortraitScanStatus = "Directory not found";
                 }
             }
-            catch(Exception e)
+            catch
             {
-                lastPortraitScanStatus = "Error: " + e.Message;
+                // lastPortraitScanStatus = "Error: " + e.Message;
             }
         }
 

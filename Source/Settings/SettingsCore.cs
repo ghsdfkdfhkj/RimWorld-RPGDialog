@@ -73,6 +73,7 @@ namespace RPGDialog
                 Find.WindowStack.Add(Dialog_MessageBox.CreateConfirmation("RPDia_ResetSettings_Confirm".Translate(), () =>
                 {
                     settings.ResetToDefaults();
+                    PortraitLoader.ClearCache();
                 }, true));
             }
 

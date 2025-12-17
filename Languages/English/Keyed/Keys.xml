@@ -49,11 +49,10 @@
 
     <!-- Custom Typing Sound Settings -->
     <RPDia_CustomTypingSoundSettings>Custom Typing Sound Settings</RPDia_CustomTypingSoundSettings>
+    <RPDia_CustomPortraitSettings>Custom Portrait Settings</RPDia_CustomPortraitSettings>
     <RPDia_RefreshSounds>Refresh List</RPDia_RefreshSounds>
     <RPDia_RefreshSoundsTooltip>Reload the list of custom typing sounds from the disk.</RPDia_RefreshSoundsTooltip>
-    <RPDia_RefreshPortraits>Refresh Portraits</RPDia_RefreshPortraits>
-    <RPDia_RefreshPortraitsTooltip>Reload storyteller portraits from the disk.</RPDia_RefreshPortraitsTooltip>
-    <RPDia_SoundScanStatus>Scanned: {0}\nFound {1} files.</RPDia_SoundScanStatus>
+
     <RPDia_NoFaction>No Faction</RPDia_NoFaction>
     <RPDia_PreviewSound>Preview Sound</RPDia_PreviewSound>
     <RPDia_SelectPortrait>Select Image</RPDia_SelectPortrait>
@@ -67,8 +66,6 @@
     <RPDia_CurrentPortrait>Current Portrait</RPDia_CurrentPortrait>
     <RPDia_ChangePortrait>Change...</RPDia_ChangePortrait>
     <RPDia_NoPortraitSelected>No entity selected.</RPDia_NoPortraitSelected>
-    <RPDia_Colonists>Colonists</RPDia_Colonists>
-    
     <RPDia_OnlyShowInGame>Only show in active game</RPDia_OnlyShowInGame>
     <RPDia_OnlyShowInGameTooltip>If enabled, RPG Dialogs will only appear when a game is loaded, preventing issues in menus or character creation.</RPDia_OnlyShowInGameTooltip>
 

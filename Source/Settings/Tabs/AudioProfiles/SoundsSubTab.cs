@@ -35,17 +35,6 @@ namespace RPGDialog
             }
             TooltipHandler.TipRegion(refreshRect, "RPDia_RefreshSoundsTooltip".Translate());
 
-            if (!string.IsNullOrEmpty(AudioProfilesTab.lastSoundScanStatus))
-            {
-                float statusWidth = Text.CalcSize(AudioProfilesTab.lastSoundScanStatus).x + 10f;
-                Rect statusRect = new Rect(refreshRect.x - statusWidth - 10f, headerRect.y, statusWidth, 24f);
-                Text.Anchor = TextAnchor.MiddleRight;
-                GUI.color = Color.gray;
-                Widgets.Label(statusRect, AudioProfilesTab.lastSoundScanStatus);
-                GUI.color = Color.white;
-                Text.Anchor = TextAnchor.UpperLeft;
-            }
-            
             float buttonHeight = 30f;
             // Space for Folder Button at bottom
             float contentHeight = inRect.height - 30f - buttonHeight - 12f;
