@@ -33,6 +33,7 @@ namespace RPGDialog
         public bool showTraderPortrait = true;
         public bool showNegotiatorPortrait = true;
         public Dictionary<string, string> customStorytellerTypingSounds = new Dictionary<string, string>();
+        public Dictionary<string, string> customPortraitMappings = new Dictionary<string, string>();
         
         // Auto Mode Settings
         public bool autoMode_CloseAtEnd = true;
@@ -48,6 +49,8 @@ namespace RPGDialog
             Scribe_Values.Look(ref typingEffectEnabled, "typingEffectEnabled", true);
             Scribe_Values.Look(ref typingSoundEnabled, "typingSoundEnabled", true);
             Scribe_Values.Look(ref typingSpeed, "typingSpeed", 35f);
+            Scribe_Collections.Look(ref customPortraitMappings, "customPortraitMappings", LookMode.Value, LookMode.Value);
+            if (customPortraitMappings == null) customPortraitMappings = new Dictionary<string, string>();
             Scribe_Values.Look(ref typingSoundVolume, "typingSoundVolume", 0.6f);
             Scribe_Values.Look(ref dialogFontSize, "dialogFontSize", 24f);
             Scribe_Values.Look(ref dialogButtonFontSize, "dialogButtonFontSize", 20f);
@@ -105,23 +108,32 @@ namespace RPGDialog
         // Tabs
         private enum SettingsTab { General, Appearance, Typing, AudioProfiles }
         private SettingsTab currentTab = SettingsTab.General;
+        
+        // Profile Sub-Tabs
+        private enum ProfileSubTab { Names, Portraits, Sounds }
+        private ProfileSubTab currentProfileSubTab = ProfileSubTab.Names;
 
         private Vector2 scrollPosition = Vector2.zero;
         
         // Audio Profile State
         private Vector2 storytellerNameScrollPosition = Vector2.zero;
-        private Vector2 entityScrollPosition = Vector2.zero;
+        private Vector2 entityScrollPosition = Vector2.zero; // For Sounds
+        private Vector2 portraitEntityScrollPosition = Vector2.zero; // For Portraits
         private Vector2 soundListScrollPosition = Vector2.zero;
         private List<string> availableSounds;
         private List<StorytellerDef> availableStorytellers;
         private SortedDictionary<string, List<Pawn>> pawnsByFaction;
-        private string selectedDefName;
+        private string selectedDefName; // For Sounds
+        private string selectedPortraitEntityKey; // For Portraits
         private string searchQuery = "";
         private bool storytellersExpanded = false;
+        private bool portraitStorytellersExpanded = false; // Separate expansion state for portraits
         private Dictionary<string, bool> factionExpansionStates = new Dictionary<string, bool>();
+        private Dictionary<string, bool> portraitFactionExpansionStates = new Dictionary<string, bool>(); // Separate expansion state for portraits
         private bool staticContentLoaded = false;
         private Dictionary<string, bool> soundFileExistsCache = new Dictionary<string, bool>();
         private string lastSoundScanStatus = "";
+        private string lastPortraitScanStatus = "";
 
         private bool SoundFileExistsFor(string key)
         {
@@ -166,6 +178,7 @@ namespace RPGDialog
             if (staticContentLoaded) return;
 
             ReloadSounds();
+            ReloadPortraits();
             
             availableStorytellers = DefDatabase<StorytellerDef>.AllDefsListForReading;
             
@@ -199,6 +212,29 @@ namespace RPGDialog
             { 
                 Log.Error($"Error loading custom typing sounds: {e.Message}");
                 lastSoundScanStatus = "Error: " + e.Message;
+            }
+        }
+
+        private void ReloadPortraits()
+        {
+            PortraitLoader.ClearCache();
+            try
+            {
+                string path = System.IO.Path.Combine(ModContent.RootDir, "Textures", "UI", "Storyteller");
+                if (System.IO.Directory.Exists(path))
+                {
+                    var pngs = System.IO.Directory.GetFiles(path, "*.png");
+                    var jpgs = System.IO.Directory.GetFiles(path, "*.jpg");
+                    lastPortraitScanStatus = string.Format("RPDia_SoundScanStatus".Translate(), path, pngs.Length + jpgs.Length);
+                }
+                else
+                {
+                    lastPortraitScanStatus = "Directory not found";
+                }
+            }
+            catch(Exception e)
+            {
+                lastPortraitScanStatus = "Error: " + e.Message;
             }
         }
 
@@ -400,20 +436,36 @@ namespace RPGDialog
 
         private void DrawAudioProfilesSettings(Rect inRect)
         {
-            Color darkHeaderColor = new Color(0.12f, 0.12f, 0.12f);
-            Color darkHeaderBorderColor = new Color(0.35f, 0.35f, 0.35f);
+             // Sub-Tabs
+            List<TabRecord> tabs = new List<TabRecord>();
+            tabs.Add(new TabRecord("RPDia_TabNames".Translate(), () => currentProfileSubTab = ProfileSubTab.Names, currentProfileSubTab == ProfileSubTab.Names));
+            tabs.Add(new TabRecord("RPDia_TabPortraits".Translate(), () => currentProfileSubTab = ProfileSubTab.Portraits, currentProfileSubTab == ProfileSubTab.Portraits));
+            tabs.Add(new TabRecord("RPDia_TabSounds".Translate(), () => currentProfileSubTab = ProfileSubTab.Sounds, currentProfileSubTab == ProfileSubTab.Sounds));
 
-            // Split into two columns
-            Rect rightRect = inRect; // Reusing previous logic name for minimal diff
+            Rect tabRect = new Rect(inRect.x, inRect.y, inRect.width, 30f);
+            TabDrawer.DrawTabs(tabRect, tabs);
+
+            Rect contentRect = new Rect(inRect.x, inRect.y + 40f, inRect.width, inRect.height - 40f);
+
+            switch (currentProfileSubTab)
+            {
+                case ProfileSubTab.Names:
+                    DrawProfileNames(contentRect);
+                    break;
+                case ProfileSubTab.Portraits:
+                    DrawProfilePortraits(contentRect);
+                    break;
+                case ProfileSubTab.Sounds:
+                    DrawProfileSounds(contentRect);
+                    break;
+            }
+        }
+
+        private void DrawProfileNames(Rect inRect)
+        {
+            Widgets.Label(new Rect(inRect.x, inRect.y, inRect.width, 30f), "RPDia_StorytellerNameSettings".Translate());
             
-            float storytellerHeight = inRect.height * 0.4f;
-            Rect storytellerRect = new Rect(rightRect.x, rightRect.y, rightRect.width, storytellerHeight);
-            float gap = 12f;
-            Rect soundSettingsRect = new Rect(rightRect.x, rightRect.y + storytellerHeight + gap, rightRect.width, inRect.height - storytellerHeight - gap);
-
-            // --- Storyteller Names (Top) ---
-            Widgets.Label(new Rect(storytellerRect.x, storytellerRect.y, storytellerRect.width, 30f), "RPDia_StorytellerNameSettings".Translate());
-            Rect scrollContainerRect = new Rect(storytellerRect.x, storytellerRect.y + 30f, storytellerRect.width, storytellerRect.height - 30f);
+            Rect scrollContainerRect = new Rect(inRect.x, inRect.y + 30f, inRect.width, inRect.height - 30f);
             
             var storytellerDefs = DefDatabase<StorytellerDef>.AllDefs.ToList();
             float storytellerContentHeight = storytellerDefs.Count * 32f;
@@ -422,10 +474,23 @@ namespace RPGDialog
             Widgets.BeginScrollView(scrollContainerRect, ref storytellerNameScrollPosition, viewRect);
             Listing_Standard innerStorytellerListing = new Listing_Standard();
             innerStorytellerListing.Begin(viewRect);
+            
             foreach (var storytellerDef in storytellerDefs)
             {
+                Rect lineRect = innerStorytellerListing.GetRect(30f);
+                
+                float labelWidth = lineRect.width * 0.4f;
+                float textWidth = lineRect.width - labelWidth - 10f;
+
+                Rect labelRect = new Rect(lineRect.x, lineRect.y, labelWidth, 30f);
+                Rect textRect = new Rect(labelRect.xMax, lineRect.y, textWidth, 30f);
+
+                Text.Anchor = TextAnchor.MiddleLeft;
+                Widgets.Label(labelRect, storytellerDef.label);
+                Text.Anchor = TextAnchor.UpperLeft;
+                
                 string currentName = StorytellerNameDatabase.GetStorytellerName(storytellerDef);
-                string newName = innerStorytellerListing.TextEntryLabeled(storytellerDef.label, currentName);
+                string newName = Widgets.TextField(textRect, currentName);
                 if (newName != currentName)
                 {
                     StorytellerNameDatabase.SetStorytellerName(storytellerDef, newName);
@@ -433,13 +498,221 @@ namespace RPGDialog
             }
             innerStorytellerListing.End();
             Widgets.EndScrollView();
+        }
+
+        private void DrawProfilePortraits(Rect inRect)
+        {
+            // Header: Refresh Button & Status
+            Rect headerRect = new Rect(inRect.x, inRect.y, inRect.width, 30f);
             
-            // --- Custom Typing Sounds (Bottom) ---
-            Rect headerRect = new Rect(soundSettingsRect.x, soundSettingsRect.y, soundSettingsRect.width, 30f);
+            float refreshButtonWidth = 140f;
+            Rect refreshRect = new Rect(headerRect.xMax - refreshButtonWidth, headerRect.y, refreshButtonWidth, 24f);
+            if (Widgets.ButtonText(refreshRect, "RPDia_RefreshPortraits".Translate()))
+            {
+                ReloadPortraits();
+                SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+            }
+            TooltipHandler.TipRegion(refreshRect, "RPDia_RefreshPortraitsTooltip".Translate());
+
+            if (!string.IsNullOrEmpty(lastPortraitScanStatus))
+            {
+                 float statusWidth = Text.CalcSize(lastPortraitScanStatus).x + 10f;
+                 Rect statusRect = new Rect(refreshRect.x - statusWidth - 10f, headerRect.y, statusWidth, 24f);
+                 Text.Anchor = TextAnchor.MiddleRight;
+                 GUI.color = Color.gray;
+                 Widgets.Label(statusRect, lastPortraitScanStatus);
+                 GUI.color = Color.white;
+                 Text.Anchor = TextAnchor.UpperLeft;
+            }
+            
+            Rect boxRect = new Rect(inRect.x, inRect.y + 30f, inRect.width, inRect.height - 30f - 40f); // Space for folder button
+            Widgets.DrawBox(boxRect);
+            Rect innerBoxRect = boxRect.ContractedBy(10f);
+            
+            float leftColumnWidth = innerBoxRect.width * 0.4f;
+            Rect listRect = new Rect(innerBoxRect.x, innerBoxRect.y, leftColumnWidth, innerBoxRect.height);
+            Rect detailRect = new Rect(listRect.xMax + 10f, innerBoxRect.y, innerBoxRect.width - leftColumnWidth - 10f, innerBoxRect.height);
+            
+            Widgets.DrawLineVertical(listRect.xMax + 5f, listRect.y, listRect.height);
+
+            // Left: Entity List
+            DrawPortraitEntityList(listRect);
+
+            // Right: Details
+            DrawPortraitDetails(detailRect);
+
+             // Bottom: Folder Button
+            Rect folderButtonRect = new Rect(inRect.x, boxRect.yMax + 5f, 200f, 30f);
+            if (Widgets.ButtonText(folderButtonRect, "RPDia_OpenPortraitsFolder".Translate()))
+            {
+                try { 
+                    string path = System.IO.Path.Combine(ModContent.RootDir, "Textures", "UI", "Storyteller");
+                    System.IO.Directory.CreateDirectory(path);
+                    System.Diagnostics.Process.Start(path);
+                }
+                catch (Exception e) { Log.Error($"Could not open custom portraits folder: {e.Message}"); }
+            }
+            TooltipHandler.TipRegion(folderButtonRect, "RPDia_PortraitsFolderTooltip".Translate());
+        }
+
+        private void DrawPortraitEntityList(Rect rect)
+        {
+            float availableWidthForText = rect.width - 16f;
+            float minItemHeight = 30f;
+            float viewHeight = 0f;
+            
+            Color darkHeaderColor = new Color(0.12f, 0.12f, 0.12f);
+            Color darkHeaderBorderColor = new Color(0.35f, 0.35f, 0.35f);
+
+            // Calc height
+            // Storytellers
+            viewHeight += minItemHeight; 
+            if (portraitStorytellersExpanded)
+            {
+                viewHeight += availableStorytellers.Count * minItemHeight;
+            }
+            viewHeight += 12f;
+
+            // Colonists
+            var playerPawns = new List<Pawn>();
+            if (pawnsByFaction != null)
+            {
+                 foreach(var entry in pawnsByFaction)
+                 {
+                     foreach(var p in entry.Value)
+                     {
+                         if(p.Faction != null && p.Faction.IsPlayer) playerPawns.Add(p);
+                     }
+                 }
+            }
+            
+            string colonistsHeader = "RPDia_Colonists".Translate();
+            viewHeight += minItemHeight;
+            if (portraitFactionExpansionStates.ContainsKey("Colonists") && portraitFactionExpansionStates["Colonists"])
+            {
+                viewHeight += playerPawns.Count * minItemHeight;
+            }
+
+            Rect viewRect = new Rect(0, 0, rect.width - 16f, viewHeight);
+            Widgets.BeginScrollView(rect, ref portraitEntityScrollPosition, viewRect);
+            Listing_Standard listing = new Listing_Standard();
+            listing.Begin(viewRect);
+
+            // Storytellers
+            Rect stHeaderRatio = listing.GetRect(minItemHeight);
+            Widgets.DrawBoxSolidWithOutline(stHeaderRatio, darkHeaderColor, darkHeaderBorderColor);
+            if (Widgets.ButtonInvisible(stHeaderRatio)) portraitStorytellersExpanded = !portraitStorytellersExpanded;
+            Widgets.Label(new Rect(stHeaderRatio.x + 5f, stHeaderRatio.y, stHeaderRatio.width, stHeaderRatio.height), $"{"Storyteller".Translate()} {(portraitStorytellersExpanded ? "▲" : "▼")}");
+            
+            if (portraitStorytellersExpanded)
+            {
+                foreach(var st in availableStorytellers)
+                {
+                    Rect itemRect = listing.GetRect(minItemHeight);
+                    bool isSelected = selectedPortraitEntityKey == st.defName;
+                    Widgets.DrawOptionBackground(itemRect, isSelected);
+                    if (Widgets.ButtonInvisible(itemRect)) selectedPortraitEntityKey = st.defName;
+                    Widgets.Label(new Rect(itemRect.x + 10f, itemRect.y, itemRect.width, itemRect.height), st.LabelCap);
+                }
+            }
+            
+            listing.Gap(12f);
+
+            // Colonists
+            Rect colHeaderRect = listing.GetRect(minItemHeight);
+            bool colExpanded = portraitFactionExpansionStates.ContainsKey("Colonists") && portraitFactionExpansionStates["Colonists"];
+             Widgets.DrawBoxSolidWithOutline(colHeaderRect, darkHeaderColor, darkHeaderBorderColor);
+            if (Widgets.ButtonInvisible(colHeaderRect)) portraitFactionExpansionStates["Colonists"] = !colExpanded;
+             Widgets.Label(new Rect(colHeaderRect.x + 5f, colHeaderRect.y, colHeaderRect.width, colHeaderRect.height), $"{"Colonists".Translate()} {(colExpanded ? "▲" : "▼")}"); // Using "Colonists" key if exists or fallback
+             
+             if (colExpanded)
+             {
+                 foreach(var pawn in playerPawns)
+                 {
+                    Rect itemRect = listing.GetRect(minItemHeight);
+                    bool isSelected = selectedPortraitEntityKey == pawn.ThingID;
+                    Widgets.DrawOptionBackground(itemRect, isSelected);
+                    if (Widgets.ButtonInvisible(itemRect)) selectedPortraitEntityKey = pawn.ThingID;
+                    Widgets.Label(new Rect(itemRect.x + 10f, itemRect.y, itemRect.width, itemRect.height), pawn.Name.ToStringShort);
+                 }
+             }
+
+            listing.End();
+            Widgets.EndScrollView();
+        }
+
+        private void DrawPortraitDetails(Rect rect)
+        {
+            if (selectedPortraitEntityKey.NullOrEmpty())
+            {
+                Text.Anchor = TextAnchor.MiddleCenter;
+                Widgets.Label(rect, "RPDia_NoPortraitSelected".Translate());
+                Text.Anchor = TextAnchor.UpperLeft;
+                return;
+            }
+
+            // identify entity
+            string label = selectedPortraitEntityKey;
+            StorytellerDef stDef = availableStorytellers.FirstOrDefault(s => s.defName == selectedPortraitEntityKey);
+            Pawn pawn = null;
+            if (stDef != null) label = stDef.label;
+            else 
+            {
+                 pawn = PawnsFinder.AllMapsAndWorld_Alive.FirstOrDefault(p => p.ThingID == selectedPortraitEntityKey);
+                 if (pawn != null) label = pawn.Name.ToStringShort;
+            }
+
+            Widgets.Label(new Rect(rect.x, rect.y, rect.width, 30f), "RPDia_CurrentPortrait".Translate() + ": " + label);
+
+            // Draw current portrait
+            Rect textureRect = new Rect(rect.x + (rect.width - 200f)/2f, rect.y + 40f, 200f, 250f);
+            Texture2D tex = PortraitLoader.TryLoadCustomPortrait(selectedPortraitEntityKey);
+            
+            // Fallback for visual generic generic ? No wait, TryLoadCustomPortrait returns the cached texture.
+            // If it returns null, we should show default for storyteller.
+            // For pawn, we should show pawn render? 
+            // The PortraitLoader is mainly for Storytellers (UI/Storyteller).
+            // But user wants to set portraits for Colonists too. 
+            // If we select a Colonist, and no custom portrait is mapped, we should probably show nothing or a default silhouette
+            // UNLESS the mod is supposed to override the colonist portrait in dialog.
+            
+            if (tex != null)
+            {
+                GUI.DrawTexture(textureRect, tex, ScaleMode.ScaleToFit);
+            }
+            else
+            {
+                Widgets.DrawBox(textureRect); // Placeholder
+                Text.Anchor = TextAnchor.MiddleCenter;
+                Widgets.Label(textureRect, "Default / None");
+                Text.Anchor = TextAnchor.UpperLeft;
+            }
+
+            Rect btnRect = new Rect(rect.x + (rect.width - 150f)/2f, textureRect.yMax + 20f, 150f, 30f);
+            if (Widgets.ButtonText(btnRect, "RPDia_ChangePortrait".Translate()))
+            {
+                Find.WindowStack.Add(new Dialog_PortraitSelector(selectedPortraitEntityKey, label));
+            }
+
+             Rect resetRect = new Rect(rect.x + (rect.width - 150f)/2f, btnRect.yMax + 10f, 150f, 30f);
+             if (Widgets.ButtonText(resetRect, "RPDia_ResetToDefault".Translate()))
+            {
+                settings.customPortraitMappings.Remove(selectedPortraitEntityKey);
+                PortraitLoader.ClearCache();
+            }
+        }
+        
+        private void DrawProfileSounds(Rect inRect) 
+        {
+            Color darkHeaderColor = new Color(0.12f, 0.12f, 0.12f);
+            Color darkHeaderBorderColor = new Color(0.35f, 0.35f, 0.35f);
+
+            // Header
+            Rect headerRect = new Rect(inRect.x, inRect.y, inRect.width, 30f);
             Widgets.Label(headerRect, "RPDia_CustomTypingSoundSettings".Translate());
             
-            float refreshButtonWidth = 100f;
-            Rect refreshRect = new Rect(headerRect.xMax - refreshButtonWidth, headerRect.y, refreshButtonWidth, 24f);
+            float refreshSoundButtonWidth = 120f;
+            Rect refreshRect = new Rect(headerRect.xMax - refreshSoundButtonWidth, headerRect.y, refreshSoundButtonWidth, 24f);
             if (Widgets.ButtonText(refreshRect, "RPDia_RefreshSounds".Translate()))
             {
                 ReloadSounds();
@@ -447,12 +720,10 @@ namespace RPGDialog
             }
             TooltipHandler.TipRegion(refreshRect, "RPDia_RefreshSoundsTooltip".Translate());
 
-            // Debug Status in Header (Left of Refresh button)
             if (!string.IsNullOrEmpty(lastSoundScanStatus))
             {
                 float statusWidth = Text.CalcSize(lastSoundScanStatus).x + 10f;
                 Rect statusRect = new Rect(refreshRect.x - statusWidth - 10f, headerRect.y, statusWidth, 24f);
-                
                 Text.Anchor = TextAnchor.MiddleRight;
                 GUI.color = Color.gray;
                 Widgets.Label(statusRect, lastSoundScanStatus);
@@ -461,8 +732,9 @@ namespace RPGDialog
             }
             
             float buttonHeight = 30f;
-            float boxHeight = soundSettingsRect.height - 30f - buttonHeight - 12f - 36f; 
-            Rect boxRect = new Rect(soundSettingsRect.x, soundSettingsRect.y + 30f, soundSettingsRect.width, boxHeight);
+            // Space for Folder Button at bottom
+            float contentHeight = inRect.height - 30f - buttonHeight - 12f;
+            Rect boxRect = new Rect(inRect.x, inRect.y + 30f, inRect.width, contentHeight);
             Widgets.DrawBox(boxRect);
 
             Rect innerBoxRect = boxRect.ContractedBy(10f);
@@ -487,7 +759,7 @@ namespace RPGDialog
             Rect entityListRect = new Rect(innerBoxRect.x, searchRect.yMax + 4f, leftColumnWidth, innerBoxRect.height - searchRect.height - 4f);
             Rect soundListRect = new Rect(innerBoxRect.x + innerBoxRect.width / 2 + 5f, innerBoxRect.y, innerBoxRect.width / 2 - 5f, innerBoxRect.height);
 
-            // --- Entity List (Accordion UI) ---
+             // --- Entity List (Accordion UI) ---
             var filteredPawnsByFaction = new SortedDictionary<string, List<Pawn>>();
             if (pawnsByFaction != null)
             {
@@ -560,7 +832,6 @@ namespace RPGDialog
             Listing_Standard entityListing = new Listing_Standard();
             entityListing.Begin(entityViewRect);
             
-            // Re-draw listing logic (Simplified logic from previous, keeping it clean)
             string storytellerHeaderTextDraw = $"{"Storyteller".Translate()} ({availableStorytellers.Count}) {(storytellersExpanded ? "▲" : "▼")}";
             float storytellerHeaderHeightDraw = Mathf.Max(minItemHeight, Text.CalcHeight(storytellerHeaderTextDraw, entityViewRect.width - 10f));
             Rect storytellerHeaderRect = entityListing.GetRect(storytellerHeaderHeightDraw);
@@ -654,12 +925,10 @@ namespace RPGDialog
             
             entityListing.End();
             Widgets.EndScrollView();
-            
-            // --- Sound List ---
-            if (!string.IsNullOrEmpty(selectedDefName))
-            {
 
-                
+            // --- Sound Selection ---
+             if (!string.IsNullOrEmpty(selectedDefName))
+            {
                 bool isStoryteller = DefDatabase<StorytellerDef>.GetNamed(selectedDefName, false) != null;
                 string currentSoundForDef;
 
@@ -731,7 +1000,7 @@ namespace RPGDialog
             }
 
             // Folder Buttons
-            Rect folderButtonRect = new Rect(soundSettingsRect.x, boxRect.yMax + 12f, soundSettingsRect.width, buttonHeight);
+            Rect folderButtonRect = new Rect(inRect.x, boxRect.yMax + 12f, inRect.width, 30f);
             if (Widgets.ButtonText(folderButtonRect, "RPDia_OpenTypingSoundsFolder".Translate()))
             {
                 try { 
@@ -742,18 +1011,6 @@ namespace RPGDialog
                 catch (Exception e) { Log.Error($"Could not open custom typing sounds folder: {e.Message}"); }
             }
             TooltipHandler.TipRegion(folderButtonRect, "RPDia_TypingSoundsFolderTooltip".Translate());
-            
-            Rect portraitFolderButtonRect = new Rect(soundSettingsRect.x, folderButtonRect.yMax + 6f, soundSettingsRect.width, buttonHeight);
-            if (Widgets.ButtonText(portraitFolderButtonRect, "RPDia_OpenPortraitsFolder".Translate()))
-            {
-                try { 
-                    string path = System.IO.Path.Combine(ModContent.RootDir, "Textures", "UI", "Storyteller");
-                    System.IO.Directory.CreateDirectory(path);
-                    System.Diagnostics.Process.Start(path);
-                }
-                catch (Exception e) { Log.Error($"Could not open custom portraits folder: {e.Message}"); }
-            }
-            TooltipHandler.TipRegion(portraitFolderButtonRect, "RPDia_PortraitsFolderTooltip".Translate());
         }
 
         public override string SettingsCategory()

@@ -51,9 +51,24 @@
     <RPDia_CustomTypingSoundSettings>커스텀 타이핑 소리 설정</RPDia_CustomTypingSoundSettings>
     <RPDia_RefreshSounds>목록 새로고침</RPDia_RefreshSounds>
     <RPDia_RefreshSoundsTooltip>디스크에서 타이핑 소리 목록을 다시 불러옵니다.</RPDia_RefreshSoundsTooltip>
+    <RPDia_RefreshPortraits>초상화 새로고침</RPDia_RefreshPortraits>
+    <RPDia_RefreshPortraitsTooltip>디스크에서 초상화 이미지를 다시 불러옵니다.</RPDia_RefreshPortraitsTooltip>
     <RPDia_SoundScanStatus>검색 경로: {0}\n{1}개의 파일을 찾았습니다.</RPDia_SoundScanStatus>
     <RPDia_NoFaction>소속 없음</RPDia_NoFaction>
     <RPDia_PreviewSound>미리 듣기</RPDia_PreviewSound>
+    <RPDia_SelectPortrait>이미지 선택</RPDia_SelectPortrait>
+    <RPDia_SelectPortraitFor>{0}의 초상화 선택</RPDia_SelectPortraitFor>
+    <RPDia_ResetToDefault>기본값으로 초기화</RPDia_ResetToDefault>
+    
+    <!-- UI Refactor Keys -->
+    <RPDia_TabNames>이름</RPDia_TabNames>
+    <RPDia_TabPortraits>초상화</RPDia_TabPortraits>
+    <RPDia_TabSounds>효과음</RPDia_TabSounds>
+    <RPDia_CurrentPortrait>현재 초상화</RPDia_CurrentPortrait>
+    <RPDia_ChangePortrait>변경...</RPDia_ChangePortrait>
+    <RPDia_NoPortraitSelected>선택된 대상이 없습니다.</RPDia_NoPortraitSelected>
+    <RPDia_Colonists>정착민</RPDia_Colonists>
+
     <RPDia_OnlyShowInGame>게임 진행 중에만 대화창 표시</RPDia_OnlyShowInGame>
     <RPDia_OnlyShowInGameTooltip>활성화하면 게임이 로드된 상태(맵/월드)에서만 RPG 대화창이 나타납니다. 메인 메뉴나 캐릭터 생성 화면 등에서 대화창이 뜨는 문제를 방지합니다.</RPDia_OnlyShowInGameTooltip>
 
