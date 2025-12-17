@@ -49,6 +49,9 @@
 
     <!-- Custom Typing Sound Settings -->
     <RPDia_CustomTypingSoundSettings>Custom Typing Sound Settings</RPDia_CustomTypingSoundSettings>
+    <RPDia_RefreshSounds>Refresh List</RPDia_RefreshSounds>
+    <RPDia_RefreshSoundsTooltip>Reload the list of custom typing sounds from the disk.</RPDia_RefreshSoundsTooltip>
+    <RPDia_SoundScanStatus>Scanned: {0}\nFound {1} files.</RPDia_SoundScanStatus>
     <RPDia_NoFaction>No Faction</RPDia_NoFaction>
     <RPDia_PreviewSound>Preview Sound</RPDia_PreviewSound>
     <RPDia_OnlyShowInGame>Only show in active game</RPDia_OnlyShowInGame>

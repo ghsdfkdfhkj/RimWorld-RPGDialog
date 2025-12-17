@@ -132,6 +132,12 @@ namespace RPGDialog
 			soundPathCache[key] = null;
 			return false;
 		}
+
+        public static void ClearCache()
+        {
+            soundCache.Clear();
+            soundPathCache.Clear();
+        }
 	}
 }
 

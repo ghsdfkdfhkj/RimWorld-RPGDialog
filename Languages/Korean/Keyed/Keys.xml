@@ -48,7 +48,10 @@
     <RPDia_SwitchToRPG>RPG Dialog로 전환</RPDia_SwitchToRPG>
 
     <!-- Custom Typing Sound Settings -->
-    <RPDia_CustomTypingSoundSettings>커스텀 타이핑 사운드 설정</RPDia_CustomTypingSoundSettings>
+    <RPDia_CustomTypingSoundSettings>커스텀 타이핑 소리 설정</RPDia_CustomTypingSoundSettings>
+    <RPDia_RefreshSounds>목록 새로고침</RPDia_RefreshSounds>
+    <RPDia_RefreshSoundsTooltip>디스크에서 타이핑 소리 목록을 다시 불러옵니다.</RPDia_RefreshSoundsTooltip>
+    <RPDia_SoundScanStatus>검색 경로: {0}\n{1}개의 파일을 찾았습니다.</RPDia_SoundScanStatus>
     <RPDia_NoFaction>소속 없음</RPDia_NoFaction>
     <RPDia_PreviewSound>미리 듣기</RPDia_PreviewSound>
     <RPDia_OnlyShowInGame>게임 진행 중에만 대화창 표시</RPDia_OnlyShowInGame>

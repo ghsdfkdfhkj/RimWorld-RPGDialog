@@ -111,6 +111,7 @@ namespace RPGDialog
         // Audio Profile State
         private Vector2 storytellerNameScrollPosition = Vector2.zero;
         private Vector2 entityScrollPosition = Vector2.zero;
+        private Vector2 soundListScrollPosition = Vector2.zero;
         private List<string> availableSounds;
         private List<StorytellerDef> availableStorytellers;
         private SortedDictionary<string, List<Pawn>> pawnsByFaction;
@@ -120,6 +121,7 @@ namespace RPGDialog
         private Dictionary<string, bool> factionExpansionStates = new Dictionary<string, bool>();
         private bool staticContentLoaded = false;
         private Dictionary<string, bool> soundFileExistsCache = new Dictionary<string, bool>();
+        private string lastSoundScanStatus = "";
 
         private bool SoundFileExistsFor(string key)
         {
@@ -163,22 +165,43 @@ namespace RPGDialog
         {
             if (staticContentLoaded) return;
 
-            availableSounds = new List<string> { "Default" };
-            try
-            {
-                string soundsPath = System.IO.Path.Combine(ModContent.RootDir, "Sounds", "Typing");
-                if (System.IO.Directory.Exists(soundsPath))
-                {
-                    availableSounds.AddRange(System.IO.Directory.GetFiles(soundsPath, "*.wav")
-                        .Select(System.IO.Path.GetFileNameWithoutExtension));
-                }
-            }
-            catch (Exception e) { Log.Error($"Error loading custom typing sounds: {e.Message}"); }
+            ReloadSounds();
             
             availableStorytellers = DefDatabase<StorytellerDef>.AllDefsListForReading;
             
             staticContentLoaded = true;
         }
+
+        private void ReloadSounds()
+        {
+            availableSounds = new List<string> { "Default" };
+            soundFileExistsCache.Clear();
+            TypingSoundUtility.ClearCache();
+            try
+            {
+                string soundsPath = System.IO.Path.Combine(ModContent.RootDir, "Sounds", "Typing");
+                if (System.IO.Directory.Exists(soundsPath))
+                {
+                    var wavs = System.IO.Directory.GetFiles(soundsPath, "*.wav");
+                    var oggs = System.IO.Directory.GetFiles(soundsPath, "*.ogg");
+                    
+                    availableSounds.AddRange(wavs.Select(System.IO.Path.GetFileNameWithoutExtension));
+                    availableSounds.AddRange(oggs.Select(System.IO.Path.GetFileNameWithoutExtension));
+
+                    lastSoundScanStatus = string.Format("RPDia_SoundScanStatus".Translate(), soundsPath, availableSounds.Count - 1); // -1 for Default
+                }
+                else
+                {
+                    lastSoundScanStatus = "Directory not found: " + soundsPath;
+                }
+            }
+            catch (Exception e) 
+            { 
+                Log.Error($"Error loading custom typing sounds: {e.Message}");
+                lastSoundScanStatus = "Error: " + e.Message;
+            }
+        }
+
 
         private void RefreshPawnList()
         {
@@ -412,7 +435,30 @@ namespace RPGDialog
             Widgets.EndScrollView();
             
             // --- Custom Typing Sounds (Bottom) ---
-            Widgets.Label(new Rect(soundSettingsRect.x, soundSettingsRect.y, soundSettingsRect.width, 30f), "RPDia_CustomTypingSoundSettings".Translate());
+            Rect headerRect = new Rect(soundSettingsRect.x, soundSettingsRect.y, soundSettingsRect.width, 30f);
+            Widgets.Label(headerRect, "RPDia_CustomTypingSoundSettings".Translate());
+            
+            float refreshButtonWidth = 100f;
+            Rect refreshRect = new Rect(headerRect.xMax - refreshButtonWidth, headerRect.y, refreshButtonWidth, 24f);
+            if (Widgets.ButtonText(refreshRect, "RPDia_RefreshSounds".Translate()))
+            {
+                ReloadSounds();
+                SoundDefOf.Tick_High.PlayOneShotOnCamera(null);
+            }
+            TooltipHandler.TipRegion(refreshRect, "RPDia_RefreshSoundsTooltip".Translate());
+
+            // Debug Status in Header (Left of Refresh button)
+            if (!string.IsNullOrEmpty(lastSoundScanStatus))
+            {
+                float statusWidth = Text.CalcSize(lastSoundScanStatus).x + 10f;
+                Rect statusRect = new Rect(refreshRect.x - statusWidth - 10f, headerRect.y, statusWidth, 24f);
+                
+                Text.Anchor = TextAnchor.MiddleRight;
+                GUI.color = Color.gray;
+                Widgets.Label(statusRect, lastSoundScanStatus);
+                GUI.color = Color.white;
+                Text.Anchor = TextAnchor.UpperLeft;
+            }
             
             float buttonHeight = 30f;
             float boxHeight = soundSettingsRect.height - 30f - buttonHeight - 12f - 36f; 
@@ -612,8 +658,7 @@ namespace RPGDialog
             // --- Sound List ---
             if (!string.IsNullOrEmpty(selectedDefName))
             {
-                Listing_Standard soundOptionsListing = new Listing_Standard();
-                soundOptionsListing.Begin(soundListRect);
+
                 
                 bool isStoryteller = DefDatabase<StorytellerDef>.GetNamed(selectedDefName, false) != null;
                 string currentSoundForDef;
@@ -629,6 +674,13 @@ namespace RPGDialog
                 }
                 if (currentSoundForDef == null) currentSoundForDef = "Default";
                 
+                float soundContentHeight = availableSounds.Count * 30f;
+                Rect soundViewRect = new Rect(0, 0, soundListRect.width - 16f, soundContentHeight);
+                
+                Widgets.BeginScrollView(soundListRect, ref soundListScrollPosition, soundViewRect);
+                Listing_Standard soundOptionsListing = new Listing_Standard();
+                soundOptionsListing.Begin(soundViewRect);
+
                 foreach (var sound in availableSounds)
                 {
                     Rect itemRect = soundOptionsListing.GetRect(30f);
@@ -675,6 +727,7 @@ namespace RPGDialog
                     Text.Anchor = TextAnchor.UpperLeft;
                 }
                 soundOptionsListing.End();
+                Widgets.EndScrollView();
             }
 
             // Folder Buttons
@@ -688,6 +741,7 @@ namespace RPGDialog
                 }
                 catch (Exception e) { Log.Error($"Could not open custom typing sounds folder: {e.Message}"); }
             }
+            TooltipHandler.TipRegion(folderButtonRect, "RPDia_TypingSoundsFolderTooltip".Translate());
             
             Rect portraitFolderButtonRect = new Rect(soundSettingsRect.x, folderButtonRect.yMax + 6f, soundSettingsRect.width, buttonHeight);
             if (Widgets.ButtonText(portraitFolderButtonRect, "RPDia_OpenPortraitsFolder".Translate()))
@@ -699,6 +753,7 @@ namespace RPGDialog
                 }
                 catch (Exception e) { Log.Error($"Could not open custom portraits folder: {e.Message}"); }
             }
+            TooltipHandler.TipRegion(portraitFolderButtonRect, "RPDia_PortraitsFolderTooltip".Translate());
         }
 
         public override string SettingsCategory()
