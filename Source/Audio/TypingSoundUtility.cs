@@ -113,21 +113,25 @@ namespace RPGDialog
 			{
 				return fullPath != null;
 			}
-			string typingSoundPath = Path.Combine(SettingsCore.ModContent.RootDir, "Sounds", "Typing").Replace('\\', '/');
-			string wav = Path.Combine(typingSoundPath, key + ".wav").Replace('\\', '/');
-			if (File.Exists(wav))
-			{
-				fullPath = wav;
-				soundPathCache[key] = fullPath;
-				return true;
-			}
-			string ogg = Path.Combine(typingSoundPath, key + ".ogg").Replace('\\', '/');
-			if (File.Exists(ogg))
-			{
-				fullPath = ogg;
-				soundPathCache[key] = fullPath;
-				return true;
-			}
+            
+            string typingSoundPath = Path.Combine(SettingsCore.ModContent.RootDir, "Sounds", "Typing");
+            
+            string wavPath = FileUtils.FindFileCaseInsensitive(typingSoundPath, key + ".wav");
+            if (wavPath != null)
+            {
+                fullPath = wavPath;
+                soundPathCache[key] = fullPath;
+                return true;
+            }
+            
+            string oggPath = FileUtils.FindFileCaseInsensitive(typingSoundPath, key + ".ogg");
+            if (oggPath != null)
+            {
+                fullPath = oggPath;
+                soundPathCache[key] = fullPath;
+                return true;
+            }
+
 			fullPath = null;
 			soundPathCache[key] = null;
 			return false;

@@ -45,11 +45,12 @@ namespace RPGDialog
              try 
              {
                  string path = GetManualTexturePath();
-                 string pngPath = System.IO.Path.Combine(path, fileName + ".png");
-                 if (System.IO.File.Exists(pngPath)) return LoadTextureFromFile(pngPath);
                  
-                 string jpgPath = System.IO.Path.Combine(path, fileName + ".jpg");
-                 if (System.IO.File.Exists(jpgPath)) return LoadTextureFromFile(jpgPath);
+                 string pngPath = FileUtils.FindFileCaseInsensitive(path, fileName + ".png");
+                 if (pngPath != null) return LoadTextureFromFile(pngPath);
+                 
+                 string jpgPath = FileUtils.FindFileCaseInsensitive(path, fileName + ".jpg");
+                 if (jpgPath != null) return LoadTextureFromFile(jpgPath);
              }
              catch (System.Exception e)
              {
@@ -73,8 +74,9 @@ namespace RPGDialog
             try 
             {
                 string path = GetManualTexturePath();
-                string pngPath = System.IO.Path.Combine(path, targetFileName + ".png");
-                if (System.IO.File.Exists(pngPath))
+                
+                string pngPath = FileUtils.FindFileCaseInsensitive(path, targetFileName + ".png");
+                if (pngPath != null)
                 {
                     Texture2D tex = LoadTextureFromFile(pngPath);
                     if (tex != null)
@@ -83,10 +85,11 @@ namespace RPGDialog
                         return tex;
                     }
                 }
-                string jpgPath = System.IO.Path.Combine(path, targetFileName + ".jpg");
-                if (System.IO.File.Exists(jpgPath))
+                
+                string jpgPath = FileUtils.FindFileCaseInsensitive(path, targetFileName + ".jpg");
+                if (jpgPath != null)
                 {
-                     Texture2D tex = LoadTextureFromFile(jpgPath);
+                    Texture2D tex = LoadTextureFromFile(jpgPath);
                     if (tex != null)
                     {
                         portraitCache[storytellerDefName] = tex;

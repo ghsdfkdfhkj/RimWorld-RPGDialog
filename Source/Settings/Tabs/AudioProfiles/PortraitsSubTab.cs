@@ -71,8 +71,7 @@ namespace RPGDialog
             {
                 try { 
                     string path = System.IO.Path.Combine(SettingsCore.ModContent.RootDir, "Textures", "UI", "Portraits");
-                    System.IO.Directory.CreateDirectory(path);
-                    System.Diagnostics.Process.Start(path);
+                    FileUtils.OpenDirectory(path);
                 }
                 catch (Exception e) { Log.Error($"Could not open custom portraits folder: {e.Message}"); }
             }
