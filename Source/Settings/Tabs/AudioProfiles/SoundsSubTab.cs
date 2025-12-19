@@ -248,16 +248,7 @@ namespace RPGDialog
                 if (currentSoundForDef == null) currentSoundForDef = "Default";
                 
                 float soundContentHeight = AudioProfilesTab.availableSounds.Count * 30f;
-                Rect soundViewRect = new Rect(0, 0, soundListRect.width - 16f, soundContentHeight); // FIX: soundListScrollPosition usage? It's a Vector2. soundListRect missing?
-                // Wait, I see soundListRect up there but it's local.
-                // Ah, the original code had soundViewRect based on soundListRect.width.
-                // Here I copied logical blocks but might have missed the scope of soundListRect.
-                
-                // Oops, soundListRect is local in this method scope, defined above.
-                // soundViewRect definition here seems to try to access soundListRect.width, but I typed soundListScrollPosition.width (Vector2 has no width).
-                // Let me fix that in the instruction below or assume I made a mistake in this block.
-                // Correcting: `Rect soundViewRect = new Rect(0, 0, soundListRect.width - 16f, soundContentHeight);`
-                
+                Rect soundViewRect = new Rect(0, 0, soundListRect.width - 16f, soundContentHeight);
                 Widgets.BeginScrollView(soundListRect, ref soundListScrollPosition, soundViewRect); // Using soundListRect from above
                 Listing_Standard soundOptionsListing = new Listing_Standard();
                 soundOptionsListing.Begin(soundViewRect);

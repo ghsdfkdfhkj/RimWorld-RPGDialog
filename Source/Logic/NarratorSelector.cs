@@ -63,7 +63,16 @@ namespace RPGDialog
             if (chosen != null)
             {
                 speakerName = chosen.LabelShort;
-                portrait = PortraitsCache.Get(chosen, new Vector2(150f, 200f), Rot4.South, default(Vector3), 1.0f);
+                
+                // Try to load custom portrait first using ThingID
+                portrait = PortraitLoader.TryLoadCustomPortrait(chosen.ThingID);
+                
+                // Fallback to standard render if no custom portrait
+                if (portrait == null)
+                {
+                    portrait = PortraitsCache.Get(chosen, new Vector2(150f, 200f), Rot4.South, default(Vector3), 1.0f);
+                }
+                
                 return chosen;
             }
 

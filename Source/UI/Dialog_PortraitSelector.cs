@@ -61,21 +61,6 @@ namespace RPGDialog
                 
                 Rect itemRect = new Rect(col * (ItemSize + Spacing), row * (ItemSize + Spacing), ItemSize, ItemSize);
                 
-                // Draw Texture
-                // We fake a "defName" load by passing the filename directly to the loader, 
-                // but since PortraitLoader now uses mapping, we need to be careful.
-                // Actually, PortraitLoader.TryLoadCustomPortrait logic expects a DefName and looks for DefName.png
-                // We want to verify what "portraitName" looks like.
-                // Let's just load it raw for the preview using a temp mapped call or helper.
-                // Better: Create a helper in PortraitLoader to load by specific name, or just hijack the logic.
-                
-                // We'll temporarily map it for preview? No, that's messy.
-                // Let's use the actual file path for preview.
-                // Accessing private/internal logic would be cleaner if exposed.
-                // Let's assume TryLoadCustomPortrait works if we pass the filename as if it were a defname, 
-                // AND there is no mapping for that filename key. 
-                
-                // Use GetRawPortrait to bypass any mappings and see the actual file content
                 Texture2D tex = PortraitLoader.GetRawPortrait(portraitName);
                 if (tex != null)
                 {

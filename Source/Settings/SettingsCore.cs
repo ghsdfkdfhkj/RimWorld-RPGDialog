@@ -26,14 +26,8 @@ namespace RPGDialog
 
         public override void DoSettingsWindowContents(Rect inRect)
         {
-             // Initialize static content if needed - delegated to appropriate tabs or handled here if global
-             // AudioProfilesTab might need initialization logic called
-
             if (Current.Game != null && currentTab == SettingsTab.AudioProfiles)
             {
-                 // Logic handled in AudioProfilesTab.RefreshPawnList() if needed
-                 // But AudioProfilesTab needs to be static or instantiated?
-                 // Let's make Tabs static helper classes for now as they were just methods
             }
             
             // Draw Tabs
